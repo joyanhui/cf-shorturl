@@ -1,0 +1,147 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSettings } from '../lib/kv';
+
+const kv = Astro.locals.runtime.env.KV;
+const settings = await getSettings(kv);
+const turnstileSiteKey = settings?.turnstile_site_key || '';
+---
+
+<BaseLayout title="CF ShortURL - 登录">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <h1>🔗 CF ShortURL</h1>
+      <p class="login-desc">短链接管理系统</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="passInput">管理员密码</label>
+          <input type="password" id="passInput" class="input" placeholder="请输入密码" autocomplete="current-password" autofocus>
+        </div>
+        {turnstileSiteKey && <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="light"></div>}
+        <p id="errorMsg" class="error-msg hidden"></p>
+        <button type="submit" id="loginBtn" class="btn btn-primary btn-block">登录</button>
+      </form>
+    </div>
+  </div>
+  {turnstileSiteKey && <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+</BaseLayout>
+
+<style>
+  .login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 48px);
+  }
+  .login-card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    width: 380px;
+    max-width: 100%;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .login-card h1 {
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+  .login-desc {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .form-group {
+    margin-bottom: 16px;
+    text-align: left;
+  }
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #333;
+  }
+  .input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .input:focus { border-color: #1677ff; box-shadow: 0 0 0 2px rgba(22,119,255,0.1); }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all .15s;
+  }
+  .btn-primary {
+    background: #1677ff;
+    color: white;
+    border-color: #1677ff;
+  }
+  .btn-primary:hover { background: #4096ff; }
+  .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-block { width: 100%; }
+  .error-msg {
+    color: #ff4d4f;
+    font-size: 13px;
+    margin-bottom: 12px;
+    text-align: left;
+  }
+  .error-msg.hidden { display: none; }
+  .cf-turnstile { margin-bottom: 12px; display: flex; justify-content: center; }
+</style>
+
+<script>
+(function () {
+  const form = document.getElementById('loginForm');
+  const passInput = document.getElementById('passInput');
+  const loginBtn = document.getElementById('loginBtn');
+  const errorMsg = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    errorMsg.classList.add('hidden');
+    loginBtn.disabled = true;
+    loginBtn.textContent = '登录中...';
+
+    try {
+      const body = { password: passInput.value };
+      if (typeof turnstile !== 'undefined') {
+        body.cfTurnstileResponse = turnstile.getResponse();
+      }
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        window.location.href = '/';
+        return;
+      }
+
+      const data = await res.json();
+      errorMsg.textContent = data.error || '登录失败';
+      errorMsg.classList.remove('hidden');
+      if (typeof turnstile !== 'undefined') turnstile.reset();
+    } catch {
+      errorMsg.textContent = '网络错误';
+      errorMsg.classList.remove('hidden');
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.textContent = '登录';
+    }
+  });
+})();
+</script>
