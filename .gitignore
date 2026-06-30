@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.wrangler/
+.astro/
+.env
+.env.local
+.dev.vars
+*.local
+*.tsbuildinfo
+.vscode/
+bun.lock

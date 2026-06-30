@@ -1,0 +1,22 @@
+{
+  "name": "cf-shorturl",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "dev:build": "echo 'RUN: bun run dev  (use astro dev with platformProxy)'",
+    "preview": "astro build && wrangler pages dev dist/",
+    "deploy": "astro build && wrangler pages deploy dist/ --commit-dirty",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "astro": "^5.0.0"
+  },
+  "devDependencies": {
+    "@astrojs/cloudflare": "^12.0.0",
+    "@cloudflare/workers-types": "^4",
+    "wrangler": "^4.0.0"
+  }
+}
