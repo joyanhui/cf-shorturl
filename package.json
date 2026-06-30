@@ -8,7 +8,7 @@
     "build": "astro build",
     "dev:build": "echo 'RUN: bun run dev  (use astro dev with platformProxy)'",
     "preview": "astro build && wrangler pages dev dist/",
-    "deploy": "astro build && wrangler pages deploy dist/ --commit-dirty",
+    "deploy": "astro build && wrangler pages deploy dist/",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
