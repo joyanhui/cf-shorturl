@@ -15,6 +15,9 @@ export async function GET(context: APIContext) {
     return notFoundPage();
   }
 
+  const authCheck = checkBasicAuth(link, context.request);
+  if (authCheck) return authCheck;
+
   context.locals.runtime.ctx.waitUntil(incrementVisits(kv, slug));
 
   switch (link.mode) {
@@ -55,6 +58,43 @@ export async function GET(context: APIContext) {
         headers: { 'Location': link.url },
       });
   }
+}
+
+function checkBasicAuth(link: ShortLink, request: Request): Response | null {
+  const username = link.basic_auth_username;
+  const password = link.basic_auth_password;
+  if (!username || !password) return null;
+
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    return unauthResponse();
+  }
+
+  const encoded = authHeader.slice(6);
+  let decoded: string;
+  try {
+    decoded = atob(encoded);
+  } catch {
+    return unauthResponse();
+  }
+
+  const colonIndex = decoded.indexOf(':');
+  if (colonIndex === -1) return unauthResponse();
+
+  const user = decoded.slice(0, colonIndex);
+  const pass = decoded.slice(colonIndex + 1);
+
+  if (user !== username || pass !== password) return unauthResponse();
+  return null;
+}
+
+function unauthResponse(): Response {
+  return new Response('Unauthorized', {
+    status: 401,
+    headers: {
+      'WWW-Authenticate': 'Basic realm="Short URL"',
+    },
+  });
 }
 
 function generateIframePage(link: ShortLink): string {

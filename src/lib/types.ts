@@ -10,6 +10,8 @@ export interface ShortLink {
   inject_js?: string;
   content?: string;
   content_type?: string;
+  basic_auth_username?: string;
+  basic_auth_password?: string;
   created_at: string;
   updated_at: string;
   visit_count: number;
@@ -23,6 +25,8 @@ export interface CreateLinkInput {
   inject_js?: string;
   content?: string;
   content_type?: string;
+  basic_auth_username?: string;
+  basic_auth_password?: string;
 }
 
 export interface UpdateLinkInput {
@@ -33,4 +37,11 @@ export interface UpdateLinkInput {
   inject_js?: string;
   content?: string;
   content_type?: string;
+  basic_auth_username?: string;
+  basic_auth_password?: string;
+}
+
+export interface SiteSettings {
+  turnstile_site_key?: string;
+  turnstile_secret_key?: string;
 }
