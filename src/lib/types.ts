@@ -14,7 +14,6 @@ export interface ShortLink {
   basic_auth_password?: string;
   created_at: string;
   updated_at: string;
-  visit_count: number;
 }
 
 export interface CreateLinkInput {

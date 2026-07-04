@@ -1,6 +1,6 @@
 # API 文档
 
-所有管理 API 需要通过管理员会话认证（通过 Cookie 传递 `session` token）。
+所有管理 API 需要通过管理员 JWT 认证（通过 Cookie 传递 `admin_token`）。
 
 ## 认证
 
@@ -10,10 +10,12 @@
 POST /api/login
 Content-Type: application/json
 
-{ "password": "admin888" }
+{ "password": "admin888", "cfTurnstileResponse": "..." }
 ```
 
-成功返回 `200` + `Set-Cookie` 头。后续请求自动携带。
+成功返回 `200` + `Set-Cookie: admin_token=...`。后续请求自动携带。
+
+可选字段 `cfTurnstileResponse`：启用 Turnstile 验证码时需要。
 
 ### 退出登录
 
@@ -91,3 +93,27 @@ Content-Type: application/json
 ```
 DELETE /api/links?slug=abc123
 ```
+
+## 系统设置
+
+### 获取设置
+
+```
+GET /api/settings
+```
+
+### 更新设置
+
+```
+PUT /api/settings
+Content-Type: application/json
+
+{ "turnstile_site_key": "1x00000001...", "turnstile_secret_key": "0x00000001..." }
+```
+
+| 字段 | 说明 |
+|------|------|
+| `turnstile_site_key` | Cloudflare Turnstile Site Key，空字符串表示禁用 |
+| `turnstile_secret_key` | Cloudflare Turnstile Secret Key，空字符串表示禁用 |
+
+配置后登录页将显示 Turnstile 验证码，API 自动校验。可在管理后台「设置」中配置。

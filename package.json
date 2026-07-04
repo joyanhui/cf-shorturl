@@ -1,22 +1,26 @@
 {
   "name": "cf-shorturl",
   "type": "module",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "dev:build": "echo 'RUN: bun run dev  (use astro dev with platformProxy)'",
-    "preview": "astro build && wrangler pages dev dist/",
-    "deploy": "astro build && wrangler pages deploy dist/",
+    "dev": "bun run build && wrangler dev",
+    "build": "bun scripts/build.ts",
+    "preview": "bun run build && wrangler dev --ip 0.0.0.0",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "astro": "^5.0.0"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@astrojs/cloudflare": "^12.0.0",
-    "@cloudflare/workers-types": "^4",
+    "@cloudflare/workers-types": "^5",
+    "@tailwindcss/node": "^4.3.2",
+    "@tailwindcss/oxide": "^4.3.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.3.2",
     "wrangler": "^4.0.0"
   }
 }

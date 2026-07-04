@@ -1,6 +1,10 @@
-const ADMIN_KEY = 'config:admin';
-const SESSION_PREFIX = 'session:';
+import type { Env } from '../types';
+import { getAdminConfig, setAdminConfig } from './kv-fs';
+import { createJWT, verifyJWT } from '../jwt';
+
 const SESSION_TTL = 86400;
+
+let adminInitialized = false;
 
 async function hashPassword(password: string): Promise<string> {
   const data = new TextEncoder().encode(password);
@@ -8,57 +12,61 @@ async function hashPassword(password: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function initAdmin(kv: KVNamespace): Promise<void> {
-  const existing = await kv.get(ADMIN_KEY);
+export async function initAdmin(env: Env): Promise<void> {
+  if (adminInitialized) return;
+  const existing = await getAdminConfig(env);
   if (!existing) {
     const hash = await hashPassword('admin888');
-    await kv.put(ADMIN_KEY, JSON.stringify({ username: 'admin', passwordHash: hash }));
+    await setAdminConfig(env, { username: 'admin', passwordHash: hash });
   }
+  adminInitialized = true;
 }
 
-export async function verifyAdmin(kv: KVNamespace, password: string): Promise<boolean> {
-  const data = await kv.get(ADMIN_KEY);
+export async function verifyAdmin(env: Env, password: string): Promise<boolean> {
+  const data = await getAdminConfig(env);
   if (!data) return false;
-  const { passwordHash } = JSON.parse(data);
   const inputHash = await hashPassword(password);
-  return inputHash === passwordHash;
+  return inputHash === data.passwordHash;
 }
 
-export async function changePassword(kv: KVNamespace, oldPassword: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
-  const ok = await verifyAdmin(kv, oldPassword);
-  if (!ok) return { ok: false, error: '原密码错误' };
-  const hash = await hashPassword(newPassword);
-  const data = await kv.get(ADMIN_KEY);
-  const { username } = data ? JSON.parse(data) : { username: 'admin' };
-  await kv.put(ADMIN_KEY, JSON.stringify({ username, passwordHash: hash }));
+export async function changePassword(env: Env, oldPassword: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
+  const data = await getAdminConfig(env);
+  if (!data) return { ok: false, error: '原密码错误' };
+  const oldHash = await hashPassword(oldPassword);
+  if (oldHash !== data.passwordHash) return { ok: false, error: '原密码错误' };
+  const newHash = await hashPassword(newPassword);
+  await setAdminConfig(env, { ...data, passwordHash: newHash });
   return { ok: true };
 }
 
-export async function createSession(kv: KVNamespace): Promise<string> {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const bytes = crypto.getRandomValues(new Uint8Array(32));
-  let token = '';
-  for (let i = 0; i < 32; i++) token += chars[bytes[i] % chars.length];
-  await kv.put(`${SESSION_PREFIX}${token}`, '1', { expirationTtl: SESSION_TTL });
-  return token;
+// JWT token management (stateless)
+export async function signToken(env: Env, ttlSec = SESSION_TTL): Promise<string> {
+  return createJWT(env.JWT_ADMIN_SECRET, {}, ttlSec);
 }
 
-export async function validateSession(kv: KVNamespace, token: string): Promise<boolean> {
-  const data = await kv.get(`${SESSION_PREFIX}${token}`);
-  return data !== null;
+export async function verifyToken(env: Env, token: string): Promise<boolean> {
+  const payload = await verifyJWT(token, env.JWT_ADMIN_SECRET);
+  return payload !== null;
 }
 
-export async function destroySession(kv: KVNamespace, token: string): Promise<void> {
-  await kv.delete(`${SESSION_PREFIX}${token}`);
-}
-
-export function getSessionToken(request: Request): string | null {
+// Cookie helpers
+export function getTokenCookie(request: Request): string | null {
   const cookie = request.headers.get('Cookie') || '';
-  for (const part of cookie.split(';')) {
-    const [key, ...rest] = part.trim().split('=');
-    if (key === 'session') return rest.join('=');
+  if (cookie.includes('admin_token=')) {
+    for (const part of cookie.split(';')) {
+      const [key, ...rest] = part.trim().split('=');
+      if (key === 'admin_token') return rest.join('=');
+    }
   }
   return null;
+}
+
+export function setTokenCookie(token: string): string {
+  return `admin_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL}`;
+}
+
+export function clearTokenCookie(): string {
+  return 'admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
 }
 
 export function requireSessionResponse(): Response {
@@ -66,12 +74,4 @@ export function requireSessionResponse(): Response {
     status: 401,
     headers: { 'Content-Type': 'application/json' },
   });
-}
-
-export function setSessionCookie(token: string): string {
-  return `session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL}`;
-}
-
-export function clearSessionCookie(): string {
-  return 'session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
 }
