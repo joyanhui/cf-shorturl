@@ -10,9 +10,10 @@ interface LayoutProps {
   children: React.ReactNode;
   scripts?: ScriptDef[];
   lang?: Locale;
+  footerText?: string;
 }
 
-export function Layout({ title, children, scripts, lang = 'zh' }: LayoutProps) {
+export function Layout({ title, children, scripts, lang = 'zh', footerText }: LayoutProps) {
   const href = '?lang=' + (lang === 'zh' ? 'en' : 'zh');
   const label = lang === 'zh' ? 'English' : '中文';
   return (
@@ -26,10 +27,10 @@ export function Layout({ title, children, scripts, lang = 'zh' }: LayoutProps) {
       </head>
       <body>
         {children}
-        <a href={href}
-           className="fixed bottom-4 right-4 z-50 text-xs text-gray-400 bg-white/80 border border-gray-200 rounded-lg px-3 py-1.5 no-underline hover:bg-white hover:text-gray-600 transition-colors">
-          {label}
-        </a>
+        <div className="border-t border-gray-100 py-6 text-center text-xs text-gray-400 space-y-2">
+          {footerText && <p>{footerText}</p>}
+          <a href={href} className="text-gray-400 hover:text-gray-600 no-underline">{label}</a>
+        </div>
         {scripts?.map((s, i) => (
           <script key={i} dangerouslySetInnerHTML={{ __html: s.content }} />
         ))}

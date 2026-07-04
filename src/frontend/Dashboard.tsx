@@ -31,15 +31,17 @@ interface ListResult {
 
 const PAGE_SIZE = 20;
 
-const MODE_LABELS: Record<string, string> = {
-  redirect_302: '302 跳转', redirect_301: '301 跳转',
-  iframe: 'Iframe 嵌入', text: '纯文本', html: 'HTML',
-};
-
 const MODE_FIELDS: Record<string, string> = { iframe: 'iframe', html: 'content', text: 'content' };
 
 export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { adminPath: string; locale: Locale; onLogout: () => void; onToggleLang: () => void }) {
   const L = (key: string, p?: Record<string, string | number>) => t(locale, key, p);
+
+  function modeLabel(mode: string): string {
+    if (mode === 'redirect_302' || mode === 'redirect_301' || mode === 'iframe' || mode === 'html' || mode === 'text') {
+      return L('links.mode.' + mode);
+    }
+    return mode;
+  }
 
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [total, setTotal] = useState(0);
@@ -134,13 +136,13 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       });
       if (!res.ok) {
         const err: { error?: string } = await res.json();
-        alert('错误: ' + (err.error || '操作失败'));
+        alert(L('error.operationFailed') + ': ' + (err.error || L('error.unknown')));
         return;
       }
       setShowLinkModal(false);
       loadLinks();
     } catch (err: unknown) {
-      alert('网络错误: ' + (err instanceof Error ? err.message : '未知错误'));
+      alert(L('error.network') + ': ' + (err instanceof Error ? err.message : L('error.unknown')));
     }
   }, [formSlug, formUrl, formMode, formTitle, formJs, formContent, formContentType, formAuthUser, formAuthPass, editing, editSlug, loadLinks]);
 
@@ -150,13 +152,13 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       const res = await fetch(adminPath + '/api/links?slug=' + encodeURIComponent(showDelete), { method: 'DELETE' });
       if (!res.ok) {
         const err: { error?: string } = await res.json();
-        alert('删除失败: ' + (err.error || '未知错误'));
+        alert(L('error.deleteFailed') + ': ' + (err.error || L('error.unknown')));
         return;
       }
       setShowDelete(null);
       loadLinks();
     } catch (err: unknown) {
-      alert('网络错误: ' + (err instanceof Error ? err.message : '未知错误'));
+      alert(L('error.network') + ': ' + (err instanceof Error ? err.message : L('error.unknown')));
     }
   }, [showDelete, loadLinks]);
 
@@ -170,7 +172,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
     });
     const data: { error?: string } = await res.json();
     if (res.ok) { alert(L('pwd.success')); setShowPwd(false); setOldPwd(''); setNewPwd(''); setConfirmPwd(''); }
-    else { alert(data.error || '修改失败'); }
+    else { alert(data.error || L('error.passwordChangeFailed')); }
   }, [oldPwd, newPwd, confirmPwd, locale]);
 
   const handleSaveSettings = useCallback(async (e: React.FormEvent) => {
@@ -184,7 +186,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       }),
     });
     if (res.ok) { alert(L('settings.saved')); setShowSettings(false); }
-    else { const data: { error?: string } = await res.json(); alert(data.error || '保存失败'); }
+    else { const data: { error?: string } = await res.json(); alert(data.error || L('error.saveFailed')); }
   }, [turnstileSiteKey, turnstileSecretKey, locale]);
 
   const openSettings = useCallback(async () => {
@@ -213,13 +215,13 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       <div className="sticky top-0 z-50 bg-background border-b border-border px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-lg font-bold">CF ShortURL</h1>
-          <span className="text-sm text-muted-foreground hidden sm:inline">短链接管理</span>
+          <span className="text-sm text-muted-foreground hidden sm:inline">{L('nav.dashboard')}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={openSettings}><Settings className="h-4 w-4 mr-1" />设置</Button>
-          <Button variant="outline" size="sm" onClick={() => { setOldPwd(''); setNewPwd(''); setConfirmPwd(''); setShowPwd(true); }}><Key className="h-4 w-4 mr-1" />修改密码</Button>
-          <Button variant="outline" size="sm" onClick={() => setShowLogout(true)}><LogOut className="h-4 w-4 mr-1" />退出</Button>
-          <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" />新建</Button>
+          <Button variant="outline" size="sm" onClick={openSettings}><Settings className="h-4 w-4 mr-1" />{L('dashboard.settingsBtn')}</Button>
+          <Button variant="outline" size="sm" onClick={() => { setOldPwd(''); setNewPwd(''); setConfirmPwd(''); setShowPwd(true); }}><Key className="h-4 w-4 mr-1" />{L('dashboard.pwdBtn')}</Button>
+          <Button variant="outline" size="sm" onClick={() => setShowLogout(true)}><LogOut className="h-4 w-4 mr-1" />{L('dashboard.logoutBtn')}</Button>
+          <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" />{L('dashboard.newBtn')}</Button>
           <button onClick={onToggleLang} className="text-xs text-muted-foreground hover:text-foreground underline decoration-dotted cursor-pointer border-0 bg-transparent">
             {locale === 'zh' ? 'English' : '中文'}
           </button>
@@ -228,14 +230,14 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
 
       <div className="max-w-[1200px] mx-auto px-6 py-5">
         <div className="flex gap-3 mb-4">
-          <Input placeholder="搜索 slug 或目标 URL..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="flex-1" />
+          <Input placeholder={L('links.search')} value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="flex-1" />
           <select className={selectClass} value={modeFilter} onChange={e => { setModeFilter(e.target.value); setPage(0); }}>
-            <option value="">全部模式</option>
-            <option value="redirect_302">302 跳转</option>
-            <option value="redirect_301">301 跳转</option>
-            <option value="iframe">Iframe 嵌入</option>
-            <option value="html">HTML / JS / CSS / JSON</option>
-            <option value="text">纯文本</option>
+            <option value="">{L('links.allModes')}</option>
+            <option value="redirect_302">{L('links.mode.302')}</option>
+            <option value="redirect_301">{L('links.mode.301')}</option>
+            <option value="iframe">{L('links.mode.iframe')}</option>
+            <option value="html">{L('links.mode.html')}</option>
+            <option value="text">{L('links.mode.text')}</option>
           </select>
         </div>
 
@@ -243,19 +245,19 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>短链接</TableHead>
-                <TableHead>目标 URL</TableHead>
-                <TableHead>模式</TableHead>
-                <TableHead>认证</TableHead>
-                <TableHead>创建</TableHead>
-                <TableHead>操作</TableHead>
+                <TableHead>{L('links.thSlug')}</TableHead>
+                <TableHead>{L('links.thUrl')}</TableHead>
+                <TableHead>{L('links.thMode')}</TableHead>
+                <TableHead>{L('links.thAuth')}</TableHead>
+                <TableHead>{L('links.thCreated')}</TableHead>
+                <TableHead>{L('links.thActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">{L('links.loading')}</TableCell></TableRow>
               ) : links.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">暂无短链接</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">{L('links.empty')}</TableCell></TableRow>
               ) : links.map(link => (
                 <TableRow key={link.slug}>
                   <TableCell>
@@ -264,16 +266,16 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
                     </a>
                   </TableCell>
                   <TableCell className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap" title={link.url}>{link.url}</TableCell>
-                  <TableCell><Badge variant="outline">{MODE_LABELS[link.mode] || link.mode}</Badge></TableCell>
+                  <TableCell><Badge variant="outline">{modeLabel(link.mode)}</Badge></TableCell>
                   <TableCell>
                     {link.basic_auth_username && link.basic_auth_password
                       ? <Badge variant="default">🔒</Badge>
                       : <span className="text-muted-foreground">—</span>}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{new Date(link.created_at).toLocaleDateString('zh-CN')}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{new Date(link.created_at).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US')}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" onClick={() => openEdit(link.slug)}><Edit3 className="h-3 w-3 mr-1" />编辑</Button>{' '}
-                    <Button variant="destructive" size="sm" onClick={() => setShowDelete(link.slug)}><Trash2 className="h-3 w-3 mr-1" />删除</Button>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(link.slug)}><Edit3 className="h-3 w-3 mr-1" />{L('links.edit')}</Button>{' '}
+                    <Button variant="destructive" size="sm" onClick={() => setShowDelete(link.slug)}><Trash2 className="h-3 w-3 mr-1" />{L('links.delete')}</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -295,72 +297,72 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       <Dialog open={showLinkModal} onOpenChange={(o: boolean) => { if (!o) setShowLinkModal(false); }}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? '编辑短链接' : '新建短链接'}</DialogTitle>
+            <DialogTitle>{editing ? L('modal.edit') : L('modal.create')}</DialogTitle>
           </DialogHeader>
           <form id="linkForm" onSubmit={handleLinkSubmit}>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">短链 Slug</label>
+                <label className="block text-sm font-medium mb-1">{L('modal.linkSlug')}</label>
                 <div className="flex gap-2">
-                  <Input placeholder="留空自动生成" value={formSlug} onChange={e => setFormSlug(e.target.value)} />
+                  <Input placeholder={L('modal.slugAuto')} value={formSlug} onChange={e => setFormSlug(e.target.value)} />
                   <Button type="button" variant="outline" onClick={genSlug}><Dice6 className="h-4 w-4" /></Button>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">目标 URL <span className="text-destructive">*</span></label>
+                <label className="block text-sm font-medium mb-1">{L('modal.targetUrl')} <span className="text-destructive">*</span></label>
                 <Input type="url" required placeholder="https://example.com" value={formUrl} onChange={e => setFormUrl(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">响应模式</label>
+                <label className="block text-sm font-medium mb-1">{L('modal.responseMode')}</label>
                 <select className={selectClass + ' w-full'} value={formMode} onChange={e => setFormMode(e.target.value)}>
-                  <option value="redirect_302">302 临时跳转</option>
-                  <option value="redirect_301">301 永久跳转</option>
-                  <option value="iframe">Iframe 嵌入（隐藏转发）</option>
-                  <option value="html">返回 HTML / JS / CSS / JSON</option>
-                  <option value="text">返回纯文本</option>
+                  <option value="redirect_302">{L('links.mode.302_long')}</option>
+                  <option value="redirect_301">{L('links.mode.301_long')}</option>
+                  <option value="iframe">{L('links.mode.iframe_long')}</option>
+                  <option value="html">{L('links.mode.html_long')}</option>
+                  <option value="text">{L('links.mode.text_long')}</option>
                 </select>
               </div>
               {showIframeFields && (
                 <div className="space-y-4 border-l-2 border-border pl-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">页面标题</label>
+                    <label className="block text-sm font-medium mb-1">{L('modal.pageTitle')}</label>
                     <Input placeholder="Short URL" value={formTitle} onChange={e => setFormTitle(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">注入 JS 代码</label>
-                    <Textarea rows={4} placeholder="可选的 JavaScript 代码" value={formJs} onChange={e => setFormJs(e.target.value)} />
+                    <label className="block text-sm font-medium mb-1">{L('modal.injectJs')}</label>
+                    <Textarea rows={4} placeholder="JavaScript" value={formJs} onChange={e => setFormJs(e.target.value)} />
                   </div>
                 </div>
               )}
               {showContentFields && (
                 <div className="space-y-4 border-l-2 border-border pl-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">返回内容</label>
-                    <Textarea rows={8} placeholder="HTML / JS / CSS / JSON / 纯文本" value={formContent} onChange={e => setFormContent(e.target.value)} className="font-mono text-xs" />
+                    <label className="block text-sm font-medium mb-1">{L('modal.content')}</label>
+                    <Textarea rows={8} placeholder="HTML / JS / CSS / JSON / Plain Text" value={formContent} onChange={e => setFormContent(e.target.value)} className="font-mono text-xs" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Content-Type</label>
-                    <Input placeholder={formMode === 'html' ? 'text/html（默认）' : 'text/plain（默认）'} value={formContentType} onChange={e => setFormContentType(e.target.value)} />
+                    <Input placeholder={formMode === 'html' ? 'text/html' : 'text/plain'} value={formContentType} onChange={e => setFormContentType(e.target.value)} />
                   </div>
                 </div>
               )}
               <details className="border border-border rounded-lg p-3">
-                <summary className="text-sm font-medium cursor-pointer text-muted-foreground hover:text-foreground">🔒 BasicAuth 保护（可选）</summary>
+                <summary className="text-sm font-medium cursor-pointer text-muted-foreground hover:text-foreground">{L('modal.basicAuth')}</summary>
                 <div className="mt-3 space-y-3">
                   <div>
-                    <label className="block text-sm font-medium mb-1">用户名</label>
+                    <label className="block text-sm font-medium mb-1">{L('modal.username')}</label>
                     <Input value={formAuthUser} onChange={e => setFormAuthUser(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">密码</label>
+                    <label className="block text-sm font-medium mb-1">{L('modal.password')}</label>
                     <Input value={formAuthPass} onChange={e => setFormAuthPass(e.target.value)} />
                   </div>
                 </div>
               </details>
             </div>
             <DialogFooter className="mt-6">
-              <Button variant="outline" type="button" onClick={() => setShowLinkModal(false)}>取消</Button>
-              <Button type="submit">{editing ? '保存' : '创建'}</Button>
+              <Button variant="outline" type="button" onClick={() => setShowLinkModal(false)}>{L('modal.cancel')}</Button>
+              <Button type="submit">{editing ? L('modal.save') : L('modal.createBtn')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -369,12 +371,12 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       <Dialog open={!!showDelete} onOpenChange={(o: boolean) => { if (!o) setShowDelete(null); }}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
-            <DialogDescription>确定要删除短链接 <strong>/{showDelete}</strong> 吗？此操作不可恢复。</DialogDescription>
+            <DialogTitle>{L('modal.deleteTitle')}</DialogTitle>
+            <DialogDescription>{L('modal.deleteDesc', { slug: showDelete || '' })}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDelete(null)}>取消</Button>
-            <Button variant="destructive" onClick={handleDelete}>删除</Button>
+            <Button variant="outline" onClick={() => setShowDelete(null)}>{L('modal.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDelete}>{L('modal.deleteBtn')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -382,26 +384,26 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       <Dialog open={showPwd} onOpenChange={(o: boolean) => { if (!o) setShowPwd(false); }}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>修改密码</DialogTitle>
+            <DialogTitle>{L('pwd.title')}</DialogTitle>
           </DialogHeader>
           <form id="pwdForm" onSubmit={handleChangePassword}>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">原密码</label>
+                <label className="block text-sm font-medium mb-1">{L('pwd.old')}</label>
                 <Input type="password" autoComplete="current-password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">新密码</label>
+                <label className="block text-sm font-medium mb-1">{L('pwd.new')}</label>
                 <Input type="password" autoComplete="new-password" value={newPwd} onChange={e => setNewPwd(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">确认新密码</label>
+                <label className="block text-sm font-medium mb-1">{L('pwd.confirm')}</label>
                 <Input type="password" autoComplete="new-password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} />
               </div>
             </div>
             <DialogFooter className="mt-6">
-              <Button variant="outline" type="button" onClick={() => setShowPwd(false)}>取消</Button>
-              <Button type="submit">修改</Button>
+              <Button variant="outline" type="button" onClick={() => setShowPwd(false)}>{L('modal.cancel')}</Button>
+              <Button type="submit">{L('pwd.submitBtn')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -410,31 +412,31 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       <Dialog open={showSettings} onOpenChange={(o: boolean) => { if (!o) setShowSettings(false); }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>系统设置</DialogTitle>
+            <DialogTitle>{L('settings.title')}</DialogTitle>
           </DialogHeader>
           <form id="settingsForm" onSubmit={handleSaveSettings}>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Turnstile Site Key</label>
-                <Input placeholder="留空则不启用验证码" value={turnstileSiteKey} onChange={e => setTurnstileSiteKey(e.target.value)} />
+                <label className="block text-sm font-medium mb-1">{L('settings.siteKey')}</label>
+                <Input placeholder={L('settings.turnstilePlaceholder')} value={turnstileSiteKey} onChange={e => setTurnstileSiteKey(e.target.value)} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Turnstile Secret Key</label>
-                <Input type="password" placeholder="留空则不启用验证码" value={turnstileSecretKey} onChange={e => setTurnstileSecretKey(e.target.value)} />
-                <p className="text-xs text-muted-foreground mt-1">配置后登录页将显示 Cloudflare Turnstile 验证码</p>
+                <label className="block text-sm font-medium mb-1">{L('settings.secretKey')}</label>
+                <Input type="password" placeholder={L('settings.turnstilePlaceholder')} value={turnstileSecretKey} onChange={e => setTurnstileSecretKey(e.target.value)} />
+                <p className="text-xs text-muted-foreground mt-1">{L('settings.hint')}</p>
               </div>
               <div className="border-t border-border pt-4">
-                <h4 className="text-sm font-semibold mb-2">📋 环境变量配置</h4>
+                <h4 className="text-sm font-semibold mb-2">{L('settings.envTitle')}</h4>
                 <div className="text-xs text-muted-foreground space-y-1.5">
-                  <p><code className="px-1 py-0.5 rounded bg-muted">ADMIN_PATH</code><br />后台管理路径（默认 /admin），通过 Cloudflare Dashboard 设置</p>
-                  <p><code className="px-1 py-0.5 rounded bg-muted">JWT_ADMIN_SECRET</code><br />管理员 JWT 签名密钥，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
-                  <p><code className="px-1 py-0.5 rounded bg-muted">KV_FS_API_KEY</code><br />kv-filesystem 的 API Key，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
+                  <p><code className="px-1 py-0.5 rounded bg-muted">ADMIN_PATH</code><br />{L('settings.envAdminPath')}</p>
+                  <p><code className="px-1 py-0.5 rounded bg-muted">JWT_ADMIN_SECRET</code><br />{L('settings.envJwtAdmin')}</p>
+                  <p><code className="px-1 py-0.5 rounded bg-muted">KV_FS_API_KEY</code><br />{L('settings.envKvFsApiKey')}</p>
                 </div>
               </div>
             </div>
             <DialogFooter className="mt-6">
-              <Button variant="outline" type="button" onClick={() => setShowSettings(false)}>取消</Button>
-              <Button type="submit">保存</Button>
+              <Button variant="outline" type="button" onClick={() => setShowSettings(false)}>{L('settings.cancelBtn')}</Button>
+              <Button type="submit">{L('settings.saveBtn')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -443,12 +445,12 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       <Dialog open={showLogout} onOpenChange={(o: boolean) => { if (!o) setShowLogout(false); }}>
         <DialogContent className="sm:max-w-[350px]">
           <DialogHeader>
-            <DialogTitle>退出登录</DialogTitle>
-            <DialogDescription>确定退出登录吗？</DialogDescription>
+            <DialogTitle>{L('logout')}</DialogTitle>
+            <DialogDescription>{L('logout.confirm')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLogout(false)}>取消</Button>
-            <Button variant="destructive" onClick={onLogout}>退出</Button>
+            <Button variant="outline" onClick={() => setShowLogout(false)}>{L('modal.cancel')}</Button>
+            <Button variant="destructive" onClick={onLogout}>{L('logout.confirmBtn')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
