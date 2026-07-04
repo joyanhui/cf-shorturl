@@ -20,9 +20,24 @@ Bun + React + React Router + Hono + OpenAPI + Tailwind CSS + shadcn/ui + Zod。
 
 ## 部署（重要）
 
-**仅使用 Cloudflare 网页端 GitHub 集成部署**。禁止本地 `bun run deploy` / `wrangler deploy`。
+部署通过 **Cloudflare Workers GitHub 集成**自动触发：推送代码到 GitHub → Cloudflare Dashboard 检测变更 → 自动拉取并执行 `wrangler deploy`。
 
-Cloudflare Dashboard: Build command 留空，Deploy command 留空。GitHub Auto Build 自动触发构建。
+**禁止本地 `bun run deploy` / `wrangler deploy`。**
+
+Cloudflare Dashboard 配置：
+- Workers & Pages → `cf-shorturl` → Settings → Git integration → 连接 GitHub 仓库
+- Build command: 留空（wrangler 自动处理 TypeScript 打包）
+- 实际构建流程：`wrangler deploy` → 自动 esbuild 打包 `src/index.ts` → 部署到 Cloudflare 边缘
+
+**构建产物注意事项：** `src/frontend/admin.gen.ts`（SPA 前端产物）需在本地通过 `bun run build` 生成后提交到 Git。Cloudflare GitHub 集成仅运行 `wrangler deploy`，不会执行 `bun scripts/build.ts`。提交代码前请确保运行 `bun run build` 并提交生成的 `admin.gen.ts`。
+
+### 查看线上状态
+
+使用 `npx wrangler` 查看构建日志和线上状态：
+- `npx wrangler deployments list` — 查看部署历史
+- `npx wrangler tail cf-shorturl` — Worker 实时日志
+
+根据线上日志修复代码后，推送即可触发重新部署。
 
 ## 环境变量（全部设为 Secret 类型）
 
