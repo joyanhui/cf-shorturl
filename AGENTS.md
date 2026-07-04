@@ -2,7 +2,7 @@
 
 ## 技术栈
 
-Bun + React + React Router + Hono + OpenAPI + Tailwind CSS + shadcn/ui + Zod，D1 数据库用 Drizzle ORM。
+Bun + React + React Router + Hono + OpenAPI + Tailwind CSS + shadcn/ui + Zod。
 
 ## 通用规范
 
@@ -22,49 +22,77 @@ Bun + React + React Router + Hono + OpenAPI + Tailwind CSS + shadcn/ui + Zod，D
 
 **仅使用 Cloudflare 网页端 GitHub 集成部署**。禁止本地 `bun run deploy` / `wrangler deploy`。
 
-| | cf-shorturl |
-|---|---|
-| Deploy command | 留空 |
-| Build command | 留空 |
-| 构建触发 | GitHub Auto Build |
+Cloudflare Dashboard: Build command 留空，Deploy command 留空。GitHub Auto Build 自动触发构建。
 
 ## 环境变量（全部设为 Secret 类型）
 
 - `JWT_ADMIN_SECRET` — 管理员 JWT 签名密钥
 - `KV_FS_API_KEY` — kv-filesystem 的 API Key
 
-## 项目描述
+## 设计目标
 
-基于 Cloudflare Workers 的单用户短链接管理系统，通过 Service Binding 调用 cf-kv-filesystem Worker 存取数据。
+通过 Service Binding 调用 cf-kv-filesystem Worker 的单用户短链接管理系统，自身无 KV/D1/R2 依赖。
 
-- 无 KV/D1/R2 绑定，存储通过 `env.KV_FILESYSTEM.fetch()` 操作 kv-filesystem Worker
-- 数据前缀: `shorturl_link:{slug}`、`shorturl_links:index`、`shorturl_config:*`
-- 认证: 无状态 JWT（HMAC-SHA256），登录验证 SHA-256 密码后签发 JWT cookie
-- 短链接边缘缓存: `caches.default`（301 一年 / 302/iframe/text/html 5 分钟），CRUD 时清除
-- 模块级内存缓存: 索引 60s TTL，配置 5 分钟 TTL
-- 额外功能: Turnstile 验证码、Basic Auth、iframe 嵌入
-
-## 关键文件
+## 核心文件
 
 | 文件 | 作用 |
 |---|---|
-| `src/index.ts` | Worker 入口 + 路由分发（Hono app + admin 子路由） |
-| `src/schemas/index.ts` | Zod 请求/响应 schema 定义 |
-| `src/jwt.ts` | HMAC-SHA256 JWT 原语 |
-| `src/render.tsx` | React SSR 渲染辅助 |
-| `src/types.ts` | Env 接口 |
-| `src/lib/types.ts` | 数据模型（ShortLink, SiteSettings） |
-| `src/lib/kv-fs.ts` | kv-filesystem HTTP 客户端（含内存缓存）+ 链接索引管理 |
-| `src/lib/auth.ts` | 管理员认证（SHA-256 密码 + JWT 签发/验证） |
-| `src/admin/index.ts` | 管理 API 路由注册（Hono 子应用） |
-| `src/admin/auth.ts` | JWT cookie 校验 |
-| `src/admin/api_*.ts` | 各功能模块 API（Zod 校验） |
-| `src/frontend/App.tsx` | SPA 根组件（BrowserRouter） |
+| `src/index.ts` | Worker 入口 + Hono 路由分发（公开 app + admin 子路由） |
+| `src/types.ts` | 环境变量类型（Env: KV_FILESYSTEM, KV_FS_API_KEY, JWT_ADMIN_SECRET） |
+| `src/schemas/index.ts` | Zod schema（CreateLinkBody, UpdateLinkBody, LoginBody, SiteSettings 等） |
+| `src/jwt.ts` | HMAC-SHA256 JWT 签发/验签原语 |
+| `src/render.tsx` | React SSR 渲染辅助（renderHtml） |
+| `src/lib/types.ts` | 数据模型（ShortLink, CreateLinkInput, UpdateLinkInput, SiteSettings） |
+| `src/lib/kv-fs.ts` | kv-filesystem HTTP 客户端（内存缓存 + 链接索引管理） |
+| `src/lib/auth.ts` | 管理员认证（SHA-256 密码管理 + JWT 签发/验证 + Cookie 工具） |
+| `src/public.ts` | 公开 API — OpenAPIHono（首页 SSR, `/{slug}` 短链接访问, `/openapi.json`） |
+| `src/admin/index.ts` | 管理 API 路由注册（Hono 子应用，requireAuth 中间件） |
+| `src/admin/auth.ts` | JWT cookie 校验（checkAuth） |
+| `src/admin/api_login.ts` | 登录/登出 |
+| `src/admin/api_links.ts` | 短链接 CRUD + 边缘缓存清除 |
+| `src/admin/api_change_password.ts` | 修改密码 |
+| `src/admin/api_settings.ts` | 系统设置（Turnstile 验证码配置） |
+| `src/frontend/App.tsx` | SPA 根组件（BrowserRouter + Routes） |
 | `src/frontend/Dashboard.tsx` | 管理面板（表格/Modal/搜索/分页） |
 | `src/frontend/LoginPage.tsx` | 登录表单（支持 Turnstile） |
-| `src/frontend/Layout.tsx` | SSR Layout |
 | `src/frontend/Homepage.tsx` | 公开首页（SSR） |
 | `src/frontend/ErrorPage.tsx` | 错误页（SSR） |
+| `src/frontend/Layout.tsx` | SSR Layout |
+| `src/frontend/i18n.ts` | 中英文翻译字典 |
 | `src/frontend/index.tsx` | SPA 客户端 hydrate 入口 |
-| `src/frontend/admin.gen.ts` | **自动生成** — 内嵌 SPA HTML + CSS + JS |
-| `scripts/build.ts` | 构建脚本 |
+| `scripts/build.ts` | 构建脚本（Tailwind 编译 + esbuild SPA 打包） |
+
+## 核心函数
+
+| 函数 | 位置 | 说明 |
+|---|---|---|
+| `getLink(env, slug)` | lib/kv-fs | 读取短链接 |
+| `createLink(env, input)` | lib/kv-fs | 创建短链接（自动生成 slug/去重） |
+| `updateLink(env, input)` | lib/kv-fs | 更新短链接 |
+| `deleteLink(env, slug)` | lib/kv-fs | 删除短链接 + 更新索引 |
+| `listLinks(env, options?)` | lib/kv-fs | 列出短链接（搜索/筛选/分页） |
+| `getLinksIndex(env)` | lib/kv-fs | 读取 slugs 索引（带 60s 内存缓存） |
+| `getSettings(env)` / `updateSettings(env, input)` | lib/kv-fs | 系统设置读写（5 分钟内存缓存） |
+| `getAdminConfig(env)` / `setAdminConfig(env)` | lib/kv-fs | 管理员密码配置读写 |
+| `initAdmin(env)` | lib/auth | 首次初始化默认管理员 |
+| `verifyAdmin(env, password)` | lib/auth | 验证管理员密码 |
+| `signToken(env)` / `verifyToken(env, token)` | lib/auth | JWT 签发/验证 |
+| `setTokenCookie(token, path)` / `clearTokenCookie(path)` | lib/auth | Cookie 工具 |
+| `changePassword(env, oldPassword, newPassword)` | lib/auth | 修改密码 |
+| `checkAuth(request, env)` | admin/auth | JWT cookie 校验中间件 |
+| `generateSlug(length?)` | lib/kv-fs | 随机短链生成（base62） |
+
+## 核心算法
+
+**短链接访问:** URL `/{slug}` → 查 kv-filesystem（`getLink`）→ 按 `mode` 返回对应响应类型：
+- `redirect_301` / `redirect_302` → HTTP 重定向
+- `iframe` → HTML 页面内嵌 iframe（可选 inject_js）
+- `text` → 纯文本内容
+- `html` → HTML 内容
+响应写入 `caches.default` 边缘缓存（301 一年 TTL / 其他 5 分钟 TTL），后续请求零回源。支持 Basic Auth 保护。
+
+**管理后端:** SPA → 检查 `/api/check` → 未认证显示登录表单（Turnstile 支持） → 认证后 Dashboard 通过 `/api/*` 接口 CRUD。所有写操作（create/update/delete）通过 `ctx.waitUntil()` 异步清除对应边缘缓存条目。
+
+**存储:** 所有数据通过 Service Binding HTTP 调用 kv-filesystem Worker 的 `GET/PUT/DELETE /api/v1/{pkey}` API（`X-API-Key` 认证），数据以 JSON 序列化存储。pkey 前缀 `shorturl_`：`shorturl_link:{slug}`（链接数据）、`shorturl_links:index`（slugs 数组）、`shorturl_config:admin`（密码配置）、`shorturl_config:settings`（系统设置）。模块级内存缓存减少重复请求（索引 60s TTL，配置 5 分钟 TTL）。
+
+**密码:** SHA-256 哈希存储于 `shorturl_config:admin`，JWT（HMAC-SHA256）24h 过期，HttpOnly Cookie 传递。
