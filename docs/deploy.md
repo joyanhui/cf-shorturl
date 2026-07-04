@@ -1,9 +1,8 @@
 # 部署
 
-## 前置条件
+## 部署顺序
 
-- Cloudflare 账号
-- 同账号下已部署 [cf-kv-filesystem](https://github.com/joyanhui/cf-kv-filesystem)
+**必须先部署 cf-kv-filesystem，再部署 cf-shorturl。** 因为 cf-shorturl 通过 Service Binding 调用 cf-kv-filesystem，如果后者不存在，部署会失败（错误码 10143）。
 
 ## 部署方式
 
@@ -21,6 +20,12 @@ Workers Builds 是 Cloudflare 提供的 CI/CD 服务，不是 GitHub Actions。
 
 您看到的构建记录来自 **Cloudflare Dashboard → Workers & Pages → cf-shorturl → Builds**，不是 GitHub 的 Actions 页面。
 
+### 0. 部署 cf-kv-filesystem
+
+先在同账号下部署 [cf-kv-filesystem](https://github.com/joyanhui/cf-kv-filesystem) Worker。
+
+部署完成后，在 cf-kv-filesystem 的管理面板中创建一个 **API Key**，保留下一步使用。
+
 ### 1. 在 Cloudflare Dashboard 设置环境变量
 
 路径：**Cloudflare Dashboard → Workers & Pages → cf-shorturl → Settings → Variables**
@@ -31,6 +36,8 @@ Workers Builds 是 Cloudflare 提供的 CI/CD 服务，不是 GitHub Actions。
 |------|------|------|
 | `KV_FS_API_KEY` | Secret | cf-kv-filesystem 的 API Key |
 | `JWT_ADMIN_SECRET` | Secret | 管理员 JWT 签名密钥 |
+
+> `KV_FILESYSTEM` Service Binding 在 `wrangler.jsonc` 中声明，**不需要**手动添加为环境变量。部署时 wrangler 会自动绑定同账号下的 `cf-kv-filesystem` Worker。
 
 ### 2. 配置 Workers Builds
 
