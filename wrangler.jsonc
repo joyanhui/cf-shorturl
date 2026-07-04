@@ -7,7 +7,7 @@
   "services": [
     {
       "binding": "KV_FILESYSTEM",
-      "service": "cf-kv-filesystem"
+      "service": "kv-filesystem"
     }
   ],
   "observability": {
