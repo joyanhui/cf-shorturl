@@ -5,9 +5,9 @@ import { getSettings } from '../lib/kv-fs';
 export async function handleLogin(request: Request, env: Env): Promise<Response> {
   await initAdmin(env);
 
-  const { password, cfTurnstileResponse } = await request.json() as any;
-  if (!password) {
-    return Response.json({ error: '请输入密码' }, { status: 400 });
+  const { username, password, cfTurnstileResponse } = await request.json() as any;
+  if (!username || !password) {
+    return Response.json({ error: '请输入用户名和密码' }, { status: 400 });
   }
 
   const settings = await getSettings(env);
@@ -28,9 +28,9 @@ export async function handleLogin(request: Request, env: Env): Promise<Response>
     }
   }
 
-  const ok = await verifyAdmin(env, password);
+  const ok = await verifyAdmin(env, username, password);
   if (!ok) {
-    return Response.json({ error: '密码错误' }, { status: 403 });
+    return Response.json({ error: '用户名或密码错误' }, { status: 403 });
   }
 
   const token = await signToken(env);
