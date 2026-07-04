@@ -31,7 +31,7 @@ const MODE_LABELS: Record<string, string> = {
 
 const MODE_FIELDS: Record<string, string> = { iframe: 'iframe', html: 'content', text: 'content' };
 
-export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; onLogout: () => void; onToggleLang: () => void }) {
+export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { adminPath: string; locale: Locale; onLogout: () => void; onToggleLang: () => void }) {
   const L = (key: string, p?: Record<string, string | number>) => t(locale, key, p);
 
   const [links, setLinks] = useState<ShortLink[]>([]);
@@ -78,7 +78,7 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
     if (search) params.set('search', search);
     if (modeFilter) params.set('mode', modeFilter);
     try {
-      const res = await fetch('/api/links?' + params.toString());
+      const res = await fetch(adminPath + '/api/links?' + params.toString());
       if (!res.ok) return;
       const data: ListResult = await res.json();
       setLinks(data.links);
@@ -99,7 +99,7 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
   }, []);
 
   const openEdit = useCallback(async (slug: string) => {
-    const res = await fetch('/api/links?slug=' + encodeURIComponent(slug));
+    const res = await fetch(adminPath + '/api/links?slug=' + encodeURIComponent(slug));
     if (!res.ok) return;
     const link: ShortLink = await res.json();
     setEditing(true); setEditSlug(slug);
@@ -124,7 +124,7 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
       data.slug = editSlug;
     }
     try {
-      const res = await fetch('/api/links', {
+      const res = await fetch(adminPath + '/api/links', {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -144,7 +144,7 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
   const handleDelete = useCallback(async () => {
     if (!showDelete) return;
     try {
-      const res = await fetch('/api/links?slug=' + encodeURIComponent(showDelete), { method: 'DELETE' });
+      const res = await fetch(adminPath + '/api/links?slug=' + encodeURIComponent(showDelete), { method: 'DELETE' });
       if (!res.ok) {
         const err = await res.json();
         alert('删除失败: ' + (err.error || '未知错误'));
@@ -160,7 +160,7 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
   const handleChangePassword = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPwd !== confirmPwd) { alert(L('pwd.mismatch')); return; }
-    const res = await fetch('/api/change-password', {
+    const res = await fetch(adminPath + '/api/change-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }),
@@ -172,7 +172,7 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
 
   const handleSaveSettings = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/settings', {
+    const res = await fetch(adminPath + '/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -185,7 +185,7 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
   }, [turnstileSiteKey, turnstileSecretKey, locale]);
 
   const openSettings = useCallback(async () => {
-    const res = await fetch('/api/settings');
+    const res = await fetch(adminPath + '/api/settings');
     const s = await res.json();
     setTurnstileSiteKey(s.turnstile_site_key || '');
     setTurnstileSecretKey(s.turnstile_secret_key || '');
@@ -430,6 +430,14 @@ export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; 
                 <label>Turnstile Secret Key</label>
                 <input type="password" className="input" placeholder="留空则不启用验证码" value={turnstileSecretKey} onChange={e => setTurnstileSecretKey(e.target.value)} />
                 <span className="hint">配置后登录页将显示 Cloudflare Turnstile 验证码</span>
+              </div>
+              <div className="form-group">
+                <label style={{ fontSize: '13px', fontWeight: 600, marginTop: '8px' }}>📋 环境变量配置</label>
+                <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.8' }}>
+                  <p><code style={{ background: '#f3f4f6', padding: '1px 6px', borderRadius: '3px', fontSize: '12px' }}>ADMIN_PATH</code><br />后台管理路径（默认 /admin），通过 Cloudflare Dashboard 设置</p>
+                  <p><code style={{ background: '#f3f4f6', padding: '1px 6px', borderRadius: '3px', fontSize: '12px' }}>JWT_ADMIN_SECRET</code><br />管理员 JWT 签名密钥，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
+                  <p><code style={{ background: '#f3f4f6', padding: '1px 6px', borderRadius: '3px', fontSize: '12px' }}>KV_FS_API_KEY</code><br />kv-filesystem 的 API Key，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
+                </div>
               </div>
               <div className="form-actions">
                 <button type="button" className="btn btn-outline" onClick={() => setShowSettings(false)}>取消</button>

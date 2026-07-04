@@ -61,12 +61,12 @@ export function getTokenCookie(request: Request): string | null {
   return null;
 }
 
-export function setTokenCookie(token: string): string {
-  return `admin_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL}`;
+export function setTokenCookie(token: string, path = '/'): string {
+  return `admin_token=${token}; Path=${path}; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL}`;
 }
 
-export function clearTokenCookie(): string {
-  return 'admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
+export function clearTokenCookie(path = '/'): string {
+  return `admin_token=; Path=${path}; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
 export function requireSessionResponse(): Response {

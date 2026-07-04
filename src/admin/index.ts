@@ -5,40 +5,43 @@ import { handleLogin, handleLogout } from './api_login';
 import { handleListLinks, handleCreateLink, handleUpdateLink, handleDeleteLink } from './api_links';
 import { handleChangePassword } from './api_change_password';
 import { handleGetSettings, handleUpdateSettings } from './api_settings';
+import { adminHTML } from '../frontend/admin.gen';
 
-export async function adminHandler(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+export async function adminHandler(request: Request, env: Env, ctx: ExecutionContext, adminPath: string): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
 
-  if (path === '/api/login') {
-    if (method === 'POST') return handleLogin(request, env);
-    if (method === 'DELETE') return handleLogout();
+  const apiPrefix = adminPath + '/api';
+
+  if (path === apiPrefix + '/login') {
+    if (method === 'POST') return handleLogin(request, env, adminPath);
+    if (method === 'DELETE') return handleLogout(adminPath);
     return new Response('Method Not Allowed', { status: 405 });
   }
 
   // Public endpoints (no auth required)
-  if (path === '/api/check' && method === 'GET') {
+  if (path === apiPrefix + '/check' && method === 'GET') {
     const authed = await checkAuth(request, env);
     return Response.json({ authed });
   }
-  if (path === '/api/settings' && method === 'GET') {
+  if (path === apiPrefix + '/settings' && method === 'GET') {
     return handleGetSettings(request, env);
   }
 
   const authed = await checkAuth(request, env);
   if (!authed) return requireSessionResponse();
 
-  if (path === '/api/change-password') {
+  if (path === apiPrefix + '/change-password') {
     if (method === 'POST') return handleChangePassword(request, env);
     return new Response('Method Not Allowed', { status: 405 });
   }
 
-  if (path === '/api/settings' && method === 'PUT') {
+  if (path === apiPrefix + '/settings' && method === 'PUT') {
     return handleUpdateSettings(request, env);
   }
 
-  if (path === '/api/links') {
+  if (path === apiPrefix + '/links') {
     if (method === 'GET') return handleListLinks(request, env, ctx);
     if (method === 'POST') return handleCreateLink(request, env, ctx);
     if (method === 'PUT') return handleUpdateLink(request, env, ctx);
@@ -46,5 +49,8 @@ export async function adminHandler(request: Request, env: Env, ctx: ExecutionCon
     return new Response('Method Not Allowed', { status: 405 });
   }
 
-  return new Response('Not Found', { status: 404 });
+  // Serve SPA HTML for all other admin paths
+  return new Response(adminHTML, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
 }

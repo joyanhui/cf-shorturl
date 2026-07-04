@@ -3,7 +3,13 @@ import { type Locale, detectLocale, persistLocale } from './i18n';
 import { LoginPage } from './LoginPage';
 import { Dashboard } from './Dashboard';
 
+function getAdminPath(): string {
+  const p = window.location.pathname.replace(/\/+$/, '');
+  return p;
+}
+
 export function App() {
+  const adminPath = getAdminPath();
   const [locale, setLocale] = useState<Locale>(detectLocale);
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
@@ -17,7 +23,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/check')
+    fetch(adminPath + '/api/check')
       .then(r => r.json())
       .then(d => { setAuthed(d.authed); if (d.authed) fetchSettings(); })
       .catch(() => setAuthed(false));
@@ -25,14 +31,14 @@ export function App() {
   }, []);
 
   function fetchSettings() {
-    fetch('/api/settings')
+    fetch(adminPath + '/api/settings')
       .then(r => r.json())
       .then(s => setTurnstileSiteKey(s.turnstile_site_key || ''))
       .catch(() => {});
   }
 
   const handleLogout = async () => {
-    await fetch('/api/login', { method: 'DELETE' });
+    await fetch(adminPath + '/api/login', { method: 'DELETE' });
     setAuthed(false);
   };
 
@@ -45,8 +51,8 @@ export function App() {
   }
 
   if (!authed) {
-    return <LoginPage locale={locale} onLogin={() => setAuthed(true)} turnstileSiteKey={turnstileSiteKey} onToggleLang={toggleLang} />;
+    return <LoginPage adminPath={adminPath} locale={locale} onLogin={() => setAuthed(true)} turnstileSiteKey={turnstileSiteKey} onToggleLang={toggleLang} defaultPath={adminPath === '/admin'} />;
   }
 
-  return <Dashboard locale={locale} onLogout={handleLogout} onToggleLang={toggleLang} />;
+  return <Dashboard adminPath={adminPath} locale={locale} onLogout={handleLogout} onToggleLang={toggleLang} />;
 }

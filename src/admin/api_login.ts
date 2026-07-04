@@ -2,7 +2,7 @@ import type { Env } from '../types';
 import { initAdmin, verifyAdmin, signToken, setTokenCookie, clearTokenCookie } from '../lib/auth';
 import { getSettings } from '../lib/kv-fs';
 
-export async function handleLogin(request: Request, env: Env): Promise<Response> {
+export async function handleLogin(request: Request, env: Env, adminPath: string): Promise<Response> {
   try {
     await initAdmin(env);
   } catch (e) {
@@ -42,16 +42,16 @@ export async function handleLogin(request: Request, env: Env): Promise<Response>
   return new Response(JSON.stringify({ ok: true }), {
     headers: {
       'Content-Type': 'application/json',
-      'Set-Cookie': setTokenCookie(token),
+      'Set-Cookie': setTokenCookie(token, adminPath),
     },
   });
 }
 
-export function handleLogout(): Response {
+export function handleLogout(adminPath: string): Response {
   return new Response(JSON.stringify({ ok: true }), {
     headers: {
       'Content-Type': 'application/json',
-      'Set-Cookie': clearTokenCookie(),
+      'Set-Cookie': clearTokenCookie(adminPath),
     },
   });
 }

@@ -7,6 +7,8 @@ const messages: Record<string, Record<Locale, string>> = {
   'login.placeholder': { zh: '请输入密码', en: 'Enter password' },
   'login.signIn': { zh: '登录', en: 'Sign In' },
   'login.error.invalid': { zh: '密码错误', en: 'Invalid password' },
+  'login.defaultPathWarning.title': { zh: '安全提醒', en: 'Security Notice' },
+  'login.defaultPathWarning.body': { zh: '管理后台路径为默认值 /admin，建议通过 ADMIN_PATH 环境变量修改为自定义路径以增强安全性。', en: 'The admin panel path is set to the default /admin. For better security, change it via the ADMIN_PATH environment variable.' },
   'logout': { zh: '退出登录', en: 'Logout' },
   'nav.dashboard': { zh: '短链接', en: 'Links' },
   'links.search': { zh: '搜索 slug 或目标 URL...', en: 'Search slug or URL...' },

@@ -2,13 +2,15 @@ import { useRef, useState, useCallback } from 'react';
 import { type Locale, t, detectLocale, persistLocale, toggleLang } from './i18n';
 
 interface LoginPageProps {
+  adminPath: string;
   locale: Locale;
   onLogin: () => void;
   turnstileSiteKey?: string;
   onToggleLang: () => void;
+  defaultPath?: boolean;
 }
 
-export function LoginPage({ locale, onLogin, turnstileSiteKey, onToggleLang }: LoginPageProps) {
+export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onToggleLang, defaultPath }: LoginPageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +25,7 @@ export function LoginPage({ locale, onLogin, turnstileSiteKey, onToggleLang }: L
       if (turnstileSiteKey && typeof (window as any).turnstile !== 'undefined') {
         body.cfTurnstileResponse = (window as any).turnstile.getResponse();
       }
-      const res = await fetch('/api/login', {
+      const res = await fetch(adminPath + '/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -42,11 +44,17 @@ export function LoginPage({ locale, onLogin, turnstileSiteKey, onToggleLang }: L
     } finally {
       setLoading(false);
     }
-  }, [locale, onLogin, turnstileSiteKey]);
+  }, [adminPath, locale, onLogin, turnstileSiteKey]);
 
   return (
     <div className="login-wrapper">
       <div className="login-card">
+        {defaultPath && (
+          <div style={{ marginBottom: '16px', padding: '12px', fontSize: '13px', color: '#9a6700', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px' }}>
+            <strong>⚠ {t(locale, 'login.defaultPathWarning.title')}</strong><br />
+            {t(locale, 'login.defaultPathWarning.body')}
+          </div>
+        )}
         <h1>🔗 CF ShortURL</h1>
         <p className="login-desc">{t(locale, 'login.title')}</p>
         <form onSubmit={handleSubmit}>
