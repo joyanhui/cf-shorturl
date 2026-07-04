@@ -1,14 +1,13 @@
 import type { Env } from '../types';
 import { changePassword } from '../lib/auth';
+import { ChangePasswordBody } from '../schemas';
 
 export async function handleChangePassword(request: Request, env: Env): Promise<Response> {
-  const { oldPassword, newPassword } = await request.json() as any;
-  if (!oldPassword || !newPassword) {
-    return Response.json({ error: '请填写原密码和新密码' }, { status: 400 });
+  const parsed = ChangePasswordBody.safeParse(await request.json());
+  if (!parsed.success) {
+    return Response.json({ error: parsed.error.errors[0]?.message || '参数错误' }, { status: 400 });
   }
-  if (newPassword.length < 6) {
-    return Response.json({ error: '新密码至少 6 位' }, { status: 400 });
-  }
+  const { oldPassword, newPassword } = parsed.data;
 
   const result = await changePassword(env, oldPassword, newPassword);
   if (!result.ok) {

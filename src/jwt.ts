@@ -1,14 +1,14 @@
-function base64urlEncode(data: Uint8Array): string {
+function base64urlEncode(data: Uint8Array<ArrayBuffer>): string {
   return btoa(String.fromCharCode(...data))
     .replace(/=/g, '')
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
 }
 
-function base64urlDecode(str: string): Uint8Array {
+function base64urlDecode(str: string): Uint8Array<ArrayBuffer> {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
   while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>;
 }
 
 async function getHmacKey(secret: string): Promise<CryptoKey> {
@@ -45,7 +45,8 @@ export async function verifyJWT(token: string, secret: string): Promise<Record<s
     const sig = base64urlDecode(parts[2]);
 
     const key = await getHmacKey(secret);
-    const valid = await crypto.subtle.verify('HMAC', key, sig, new TextEncoder().encode(data));
+    const signData = new TextEncoder().encode(data) as Uint8Array<ArrayBuffer>;
+    const valid = await crypto.subtle.verify('HMAC', key, sig, signData);
     if (!valid) return null;
 
     const payload = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[1])));

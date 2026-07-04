@@ -1,6 +1,7 @@
 import type { Env } from '../types';
 import { initAdmin, verifyAdmin, signToken, setTokenCookie, clearTokenCookie } from '../lib/auth';
 import { getSettings } from '../lib/kv-fs';
+import { LoginBody } from '../schemas';
 
 export async function handleLogin(request: Request, env: Env, adminPath: string): Promise<Response> {
   try {
@@ -10,10 +11,11 @@ export async function handleLogin(request: Request, env: Env, adminPath: string)
     return Response.json({ error: '存储服务不可用，请检查 KV_FS_API_KEY 配置' }, { status: 503 });
   }
 
-  const { password, cfTurnstileResponse } = await request.json() as any;
-  if (!password) {
-    return Response.json({ error: '请输入密码' }, { status: 400 });
+  const parsed = LoginBody.safeParse(await request.json());
+  if (!parsed.success) {
+    return Response.json({ error: parsed.error.errors[0]?.message || '参数错误' }, { status: 400 });
   }
+  const { password, cfTurnstileResponse } = parsed.data;
 
   const settings = await getSettings(env);
   if (settings?.turnstile_secret_key) {

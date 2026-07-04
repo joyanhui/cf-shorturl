@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { type Locale, t } from './i18n';
+import { Button } from '@/frontend/components/ui/button';
+import { Input } from '@/frontend/components/ui/input';
+import { Textarea } from '@/frontend/components/ui/textarea';
+import { Badge } from '@/frontend/components/ui/badge';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/frontend/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/frontend/components/ui/dialog';
+import { Search, Plus, Settings, Key, LogOut, Edit3, Trash2, Dice6, ExternalLink } from 'lucide-react';
 
 interface ShortLink {
   slug: string;
@@ -41,7 +48,6 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   const [modeFilter, setModeFilter] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Modal states
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editSlug, setEditSlug] = useState('');
@@ -50,7 +56,6 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   const [showSettings, setShowSettings] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
 
-  // Form fields
   const [formSlug, setFormSlug] = useState('');
   const [formUrl, setFormUrl] = useState('');
   const [formMode, setFormMode] = useState('redirect_302');
@@ -61,11 +66,9 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   const [formAuthUser, setFormAuthUser] = useState('');
   const [formAuthPass, setFormAuthPass] = useState('');
 
-  // Settings form
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const [turnstileSecretKey, setTurnstileSecretKey] = useState('');
 
-  // Password form
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
@@ -203,32 +206,30 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   const showContentFields = MODE_FIELDS[formMode] === 'content';
   const showIframeFields = MODE_FIELDS[formMode] === 'iframe';
 
+  const selectClass = 'h-10 px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring';
+
   return (
-    <>
-      <div className="header">
-        <div className="header-left">
-          <h1>🔗 CF ShortURL</h1>
-          <span className="subtitle">短链接管理</span>
+    <div className="min-h-screen bg-background">
+      <div className="sticky top-0 z-50 bg-background border-b border-border px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-bold">CF ShortURL</h1>
+          <span className="text-sm text-muted-foreground hidden sm:inline">短链接管理</span>
         </div>
-        <div className="header-actions">
-          <button className="btn btn-outline" onClick={openSettings}>设置</button>
-          <button className="btn btn-outline" onClick={() => { setOldPwd(''); setNewPwd(''); setConfirmPwd(''); setShowPwd(true); }}>修改密码</button>
-          <button className="btn btn-outline btn-outline-danger" onClick={() => setShowLogout(true)}>退出</button>
-          <button className="btn btn-primary" onClick={openCreate}>+ 新建</button>
-          <button
-            type="button"
-            onClick={onToggleLang}
-            className="text-xs text-gray-400 hover:text-gray-600 underline decoration-dotted cursor-pointer border-0 bg-transparent"
-          >
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={openSettings}><Settings className="h-4 w-4 mr-1" />设置</Button>
+          <Button variant="outline" size="sm" onClick={() => { setOldPwd(''); setNewPwd(''); setConfirmPwd(''); setShowPwd(true); }}><Key className="h-4 w-4 mr-1" />修改密码</Button>
+          <Button variant="outline" size="sm" onClick={() => setShowLogout(true)}><LogOut className="h-4 w-4 mr-1" />退出</Button>
+          <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" />新建</Button>
+          <button onClick={onToggleLang} className="text-xs text-muted-foreground hover:text-foreground underline decoration-dotted cursor-pointer border-0 bg-transparent">
             {locale === 'zh' ? 'English' : '中文'}
           </button>
         </div>
       </div>
 
-      <div className="toolbar">
-        <div className="search-row">
-          <input type="text" className="input search-input" placeholder="搜索 slug 或目标 URL..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} />
-          <select className="input filter-select" value={modeFilter} onChange={e => { setModeFilter(e.target.value); setPage(0); }}>
+      <div className="max-w-[1200px] mx-auto px-6 py-5">
+        <div className="flex gap-3 mb-4">
+          <Input placeholder="搜索 slug 或目标 URL..." value={search} onChange={e => { setSearch(e.target.value); setPage(0); }} className="flex-1" />
+          <select className={selectClass} value={modeFilter} onChange={e => { setModeFilter(e.target.value); setPage(0); }}>
             <option value="">全部模式</option>
             <option value="redirect_302">302 跳转</option>
             <option value="redirect_301">301 跳转</option>
@@ -237,79 +238,81 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
             <option value="text">纯文本</option>
           </select>
         </div>
-      </div>
 
-      <div className="table-wrap">
-        <table className="links-table">
-          <thead>
-            <tr>
-              <th>短链接</th>
-              <th>目标 URL</th>
-              <th className="col-mode">模式</th>
-              <th className="col-auth">认证</th>
-              <th className="col-date">创建</th>
-              <th className="col-actions">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="empty-row">加载中...</td></tr>
-            ) : links.length === 0 ? (
-              <tr><td colSpan={6} className="empty-row">暂无短链接</td></tr>
-            ) : links.map(link => (
-              <tr key={link.slug}>
-                <td><a href={'/' + link.slug} target="_blank" className="slug-link">/{link.slug}</a></td>
-                <td className="url-cell" title={link.url}>{link.url}</td>
-                <td className="col-mode"><span className={'badge badge-' + link.mode}>{MODE_LABELS[link.mode] || link.mode}</span></td>
-                <td className="col-auth">
-                  {link.basic_auth_username && link.basic_auth_password
-                    ? <span className="badge badge-auth-on">🔒</span>
-                    : <span className="badge badge-auth-off">—</span>}
-                </td>
-                <td className="col-date">{new Date(link.created_at).toLocaleDateString('zh-CN')}</td>
-                <td className="col-actions">
-                  <button className="btn btn-xs btn-outline" onClick={() => openEdit(link.slug)}>编辑</button>
-                  <button className="btn btn-xs btn-outline-danger" onClick={() => setShowDelete(link.slug)}>删除</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="pagination">
-          <span className="page-info">{L('links.total', { n: total })} · {L('links.page', { p: page + 1, t: totalPages })}</span>
-          <div className="page-btns">
-            <button className="btn btn-xs btn-outline" disabled={page <= 0} onClick={() => setPage(p => p - 1)}>{L('links.prev')}</button>
-            <button className="btn btn-xs btn-outline" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>{L('links.next')}</button>
-          </div>
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>短链接</TableHead>
+                <TableHead>目标 URL</TableHead>
+                <TableHead>模式</TableHead>
+                <TableHead>认证</TableHead>
+                <TableHead>创建</TableHead>
+                <TableHead>操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">加载中...</TableCell></TableRow>
+              ) : links.length === 0 ? (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">暂无短链接</TableCell></TableRow>
+              ) : links.map(link => (
+                <TableRow key={link.slug}>
+                  <TableCell>
+                    <a href={'/' + link.slug} target="_blank" className="text-primary hover:underline font-mono text-sm flex items-center gap-1">
+                      /{link.slug} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </TableCell>
+                  <TableCell className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap" title={link.url}>{link.url}</TableCell>
+                  <TableCell><Badge variant="outline">{MODE_LABELS[link.mode] || link.mode}</Badge></TableCell>
+                  <TableCell>
+                    {link.basic_auth_username && link.basic_auth_password
+                      ? <Badge variant="default">🔒</Badge>
+                      : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{new Date(link.created_at).toLocaleDateString('zh-CN')}</TableCell>
+                  <TableCell>
+                    <Button variant="outline" size="sm" onClick={() => openEdit(link.slug)}><Edit3 className="h-3 w-3 mr-1" />编辑</Button>{' '}
+                    <Button variant="destructive" size="sm" onClick={() => setShowDelete(link.slug)}><Trash2 className="h-3 w-3 mr-1" />删除</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      )}
 
-      {/* Link Create/Edit Modal */}
-      {showLinkModal && (
-        <div className="modal-overlay" onClick={() => setShowLinkModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{editing ? '编辑短链接' : '新建短链接'}</h2>
-              <button className="modal-close" onClick={() => setShowLinkModal(false)}>✕</button>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-sm text-muted-foreground">{L('links.total', { n: total })} · {L('links.page', { p: page + 1, t: totalPages })}</span>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={page <= 0} onClick={() => setPage(p => p - 1)}>{L('links.prev')}</Button>
+              <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>{L('links.next')}</Button>
             </div>
-            <form id="linkForm" onSubmit={handleLinkSubmit}>
-              <div className="form-group">
-                <label>短链 Slug</label>
-                <div className="input-row">
-                  <input type="text" className="input" placeholder="留空自动生成" value={formSlug} onChange={e => setFormSlug(e.target.value)} />
-                  <button type="button" className="btn btn-outline" onClick={genSlug}>🎲</button>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={showLinkModal} onOpenChange={o => { if (!o) setShowLinkModal(false); }}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? '编辑短链接' : '新建短链接'}</DialogTitle>
+          </DialogHeader>
+          <form id="linkForm" onSubmit={handleLinkSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">短链 Slug</label>
+                <div className="flex gap-2">
+                  <Input placeholder="留空自动生成" value={formSlug} onChange={e => setFormSlug(e.target.value)} />
+                  <Button type="button" variant="outline" onClick={genSlug}><Dice6 className="h-4 w-4" /></Button>
                 </div>
               </div>
-              <div className="form-group">
-                <label>目标 URL <span className="required">*</span></label>
-                <input type="url" className="input" required placeholder="https://example.com" value={formUrl} onChange={e => setFormUrl(e.target.value)} />
+              <div>
+                <label className="block text-sm font-medium mb-1">目标 URL <span className="text-destructive">*</span></label>
+                <Input type="url" required placeholder="https://example.com" value={formUrl} onChange={e => setFormUrl(e.target.value)} />
               </div>
-              <div className="form-group">
-                <label>响应模式</label>
-                <select className="input" value={formMode} onChange={e => setFormMode(e.target.value)}>
+              <div>
+                <label className="block text-sm font-medium mb-1">响应模式</label>
+                <select className={selectClass + ' w-full'} value={formMode} onChange={e => setFormMode(e.target.value)}>
                   <option value="redirect_302">302 临时跳转</option>
                   <option value="redirect_301">301 永久跳转</option>
                   <option value="iframe">Iframe 嵌入（隐藏转发）</option>
@@ -318,154 +321,137 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
                 </select>
               </div>
               {showIframeFields && (
-                <div className="mode-fields">
-                  <div className="form-group">
-                    <label>页面标题</label>
-                    <input type="text" className="input" placeholder="Short URL" value={formTitle} onChange={e => setFormTitle(e.target.value)} />
+                <div className="space-y-4 border-l-2 border-border pl-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">页面标题</label>
+                    <Input placeholder="Short URL" value={formTitle} onChange={e => setFormTitle(e.target.value)} />
                   </div>
-                  <div className="form-group">
-                    <label>注入 JS 代码</label>
-                    <textarea className="textarea" rows={4} placeholder="可选的 JavaScript 代码" value={formJs} onChange={e => setFormJs(e.target.value)}></textarea>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">注入 JS 代码</label>
+                    <Textarea rows={4} placeholder="可选的 JavaScript 代码" value={formJs} onChange={e => setFormJs(e.target.value)} />
                   </div>
                 </div>
               )}
               {showContentFields && (
-                <div className="mode-fields">
-                  <div className="form-group">
-                    <label>返回内容</label>
-                    <textarea className="textarea textarea-code" rows={8} placeholder="HTML / JS / CSS / JSON / 纯文本" value={formContent} onChange={e => setFormContent(e.target.value)}></textarea>
+                <div className="space-y-4 border-l-2 border-border pl-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">返回内容</label>
+                    <Textarea rows={8} placeholder="HTML / JS / CSS / JSON / 纯文本" value={formContent} onChange={e => setFormContent(e.target.value)} className="font-mono text-xs" />
                   </div>
-                  <div className="form-group">
-                    <label>Content-Type</label>
-                    <input type="text" className="input" placeholder={formMode === 'html' ? 'text/html（默认）' : 'text/plain（默认）'} value={formContentType} onChange={e => setFormContentType(e.target.value)} />
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Content-Type</label>
+                    <Input placeholder={formMode === 'html' ? 'text/html（默认）' : 'text/plain（默认）'} value={formContentType} onChange={e => setFormContentType(e.target.value)} />
                   </div>
                 </div>
               )}
-              <details className="auth-section">
-                <summary className="auth-summary">🔒 BasicAuth 保护（可选）</summary>
-                <div className="auth-fields">
-                  <div className="form-group">
-                    <label>用户名</label>
-                    <input type="text" className="input" value={formAuthUser} onChange={e => setFormAuthUser(e.target.value)} />
+              <details className="border border-border rounded-lg p-3">
+                <summary className="text-sm font-medium cursor-pointer text-muted-foreground hover:text-foreground">🔒 BasicAuth 保护（可选）</summary>
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">用户名</label>
+                    <Input value={formAuthUser} onChange={e => setFormAuthUser(e.target.value)} />
                   </div>
-                  <div className="form-group">
-                    <label>密码</label>
-                    <input type="text" className="input" value={formAuthPass} onChange={e => setFormAuthPass(e.target.value)} />
+                  <div>
+                    <label className="block text-sm font-medium mb-1">密码</label>
+                    <Input value={formAuthPass} onChange={e => setFormAuthPass(e.target.value)} />
                   </div>
                 </div>
               </details>
-              <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setShowLinkModal(false)}>取消</button>
-                <button type="submit" className="btn btn-primary">{editing ? '保存' : '创建'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <DialogFooter className="mt-6">
+              <Button variant="outline" type="button" onClick={() => setShowLinkModal(false)}>取消</Button>
+              <Button type="submit">{editing ? '保存' : '创建'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {/* Delete Modal */}
-      {showDelete && (
-        <div className="modal-overlay" onClick={() => setShowDelete(null)}>
-          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>确认删除</h2>
-              <button className="modal-close" onClick={() => setShowDelete(null)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <p>确定要删除短链接 <strong>/{showDelete}</strong> 吗？</p>
-              <p className="hint">此操作不可恢复。</p>
-            </div>
-            <div className="form-actions" style={{ padding: '0 24px 20px' }}>
-              <button className="btn btn-outline" onClick={() => setShowDelete(null)}>取消</button>
-              <button className="btn btn-primary btn-danger-bg" onClick={handleDelete}>删除</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog open={!!showDelete} onOpenChange={o => { if (!o) setShowDelete(null); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogDescription>确定要删除短链接 <strong>/{showDelete}</strong> 吗？此操作不可恢复。</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDelete(null)}>取消</Button>
+            <Button variant="destructive" onClick={handleDelete}>删除</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Change Password Modal */}
-      {showPwd && (
-        <div className="modal-overlay" onClick={() => setShowPwd(false)}>
-          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>修改密码</h2>
-              <button className="modal-close" onClick={() => setShowPwd(false)}>✕</button>
+      <Dialog open={showPwd} onOpenChange={o => { if (!o) setShowPwd(false); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>修改密码</DialogTitle>
+          </DialogHeader>
+          <form id="pwdForm" onSubmit={handleChangePassword}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">原密码</label>
+                <Input type="password" autoComplete="current-password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">新密码</label>
+                <Input type="password" autoComplete="new-password" value={newPwd} onChange={e => setNewPwd(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">确认新密码</label>
+                <Input type="password" autoComplete="new-password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} />
+              </div>
             </div>
-            <form id="pwdForm" onSubmit={handleChangePassword}>
-              <div className="form-group">
-                <label>原密码</label>
-                <input type="password" className="input" autoComplete="current-password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label>新密码</label>
-                <input type="password" className="input" autoComplete="new-password" value={newPwd} onChange={e => setNewPwd(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label>确认新密码</label>
-                <input type="password" className="input" autoComplete="new-password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} />
-              </div>
-              <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setShowPwd(false)}>取消</button>
-                <button type="submit" className="btn btn-primary">修改</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <DialogFooter className="mt-6">
+              <Button variant="outline" type="button" onClick={() => setShowPwd(false)}>取消</Button>
+              <Button type="submit">修改</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="modal-overlay" onClick={() => setShowSettings(false)}>
-          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>系统设置</h2>
-              <button className="modal-close" onClick={() => setShowSettings(false)}>✕</button>
-            </div>
-            <form id="settingsForm" onSubmit={handleSaveSettings}>
-              <div className="form-group">
-                <label>Turnstile Site Key</label>
-                <input type="text" className="input" placeholder="留空则不启用验证码" value={turnstileSiteKey} onChange={e => setTurnstileSiteKey(e.target.value)} />
+      <Dialog open={showSettings} onOpenChange={o => { if (!o) setShowSettings(false); }}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>系统设置</DialogTitle>
+          </DialogHeader>
+          <form id="settingsForm" onSubmit={handleSaveSettings}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Turnstile Site Key</label>
+                <Input placeholder="留空则不启用验证码" value={turnstileSiteKey} onChange={e => setTurnstileSiteKey(e.target.value)} />
               </div>
-              <div className="form-group">
-                <label>Turnstile Secret Key</label>
-                <input type="password" className="input" placeholder="留空则不启用验证码" value={turnstileSecretKey} onChange={e => setTurnstileSecretKey(e.target.value)} />
-                <span className="hint">配置后登录页将显示 Cloudflare Turnstile 验证码</span>
+              <div>
+                <label className="block text-sm font-medium mb-1">Turnstile Secret Key</label>
+                <Input type="password" placeholder="留空则不启用验证码" value={turnstileSecretKey} onChange={e => setTurnstileSecretKey(e.target.value)} />
+                <p className="text-xs text-muted-foreground mt-1">配置后登录页将显示 Cloudflare Turnstile 验证码</p>
               </div>
-              <div className="form-group">
-                <label style={{ fontSize: '13px', fontWeight: 600, marginTop: '8px' }}>📋 环境变量配置</label>
-                <div style={{ fontSize: '12px', color: '#666', lineHeight: '1.8' }}>
-                  <p><code style={{ background: '#f3f4f6', padding: '1px 6px', borderRadius: '3px', fontSize: '12px' }}>ADMIN_PATH</code><br />后台管理路径（默认 /admin），通过 Cloudflare Dashboard 设置</p>
-                  <p><code style={{ background: '#f3f4f6', padding: '1px 6px', borderRadius: '3px', fontSize: '12px' }}>JWT_ADMIN_SECRET</code><br />管理员 JWT 签名密钥，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
-                  <p><code style={{ background: '#f3f4f6', padding: '1px 6px', borderRadius: '3px', fontSize: '12px' }}>KV_FS_API_KEY</code><br />kv-filesystem 的 API Key，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
+              <div className="border-t border-border pt-4">
+                <h4 className="text-sm font-semibold mb-2">📋 环境变量配置</h4>
+                <div className="text-xs text-muted-foreground space-y-1.5">
+                  <p><code className="px-1 py-0.5 rounded bg-muted">ADMIN_PATH</code><br />后台管理路径（默认 /admin），通过 Cloudflare Dashboard 设置</p>
+                  <p><code className="px-1 py-0.5 rounded bg-muted">JWT_ADMIN_SECRET</code><br />管理员 JWT 签名密钥，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
+                  <p><code className="px-1 py-0.5 rounded bg-muted">KV_FS_API_KEY</code><br />kv-filesystem 的 API Key，通过 Cloudflare Dashboard 以 Secret 类型设置</p>
                 </div>
               </div>
-              <div className="form-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setShowSettings(false)}>取消</button>
-                <button type="submit" className="btn btn-primary">保存</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+            <DialogFooter className="mt-6">
+              <Button variant="outline" type="button" onClick={() => setShowSettings(false)}>取消</Button>
+              <Button type="submit">保存</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {/* Logout Modal */}
-      {showLogout && (
-        <div className="modal-overlay" onClick={() => setShowLogout(false)}>
-          <div className="modal modal-sm" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>退出登录</h2>
-              <button className="modal-close" onClick={() => setShowLogout(false)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <p>确定退出登录吗？</p>
-            </div>
-            <div className="form-actions" style={{ padding: '0 24px 20px' }}>
-              <button className="btn btn-outline" onClick={() => setShowLogout(false)}>取消</button>
-              <button className="btn btn-primary btn-danger-bg" onClick={onLogout}>退出</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      <Dialog open={showLogout} onOpenChange={o => { if (!o) setShowLogout(false); }}>
+        <DialogContent className="sm:max-w-[350px]">
+          <DialogHeader>
+            <DialogTitle>退出登录</DialogTitle>
+            <DialogDescription>确定退出登录吗？</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLogout(false)}>取消</Button>
+            <Button variant="destructive" onClick={onLogout}>退出</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

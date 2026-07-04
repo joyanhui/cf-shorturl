@@ -17,13 +17,6 @@ function handleError(status: number, locale: Locale): Response {
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.get('/favicon.ico', async (c) => {
-  const fav = await fetch('https://github.githubassets.com/favicons/favicon-dark.svg');
-  return new Response(fav.body, {
-    headers: { 'Content-Type': fav.headers.get('Content-Type') || 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' },
-  });
-});
-
 app.route('/', publicApp);
 
 app.notFound((c) => {
@@ -47,14 +40,6 @@ export default {
       const subUrl = new URL(request.url);
       subUrl.pathname = rest || '/';
       const subReq = new Request(subUrl.toString(), request);
-
-      if (path === adminPath + '/login') {
-        return new Response(null, {
-          status: 302,
-          headers: { Location: adminPath },
-        });
-      }
-
       return adminApp.fetch(subReq, env, ctx);
     }
 

@@ -1,0 +1,3 @@
+interface CacheStorage {
+  default: Cache;
+}

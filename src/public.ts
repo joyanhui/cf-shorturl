@@ -1,4 +1,5 @@
-import { Hono } from 'hono';
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { z } from 'zod';
 import React from 'react';
 import { Env } from './types';
 import { renderHtml } from './render';
@@ -68,19 +69,32 @@ function checkBasicAuth(link: ShortLink, request: Request): Response | null {
   return null;
 }
 
-const publicApp = new Hono<{ Bindings: Env }>();
+const publicApp = new OpenAPIHono<{ Bindings: Env }>();
 
-publicApp.get('/openapi.json', (c) => {
-  return c.json({
-    openapi: '3.1.0',
-    info: { title: 'CF ShortURL API', version: '2.0.0' },
-    paths: {
-      '/{slug}': { get: { parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }] } },
-    },
-  });
+const openapiRoute = createRoute({
+  method: 'get',
+  path: '/openapi.json',
+  responses: {
+    200: { content: { 'application/json': { schema: z.any() } }, description: 'OpenAPI JSON' },
+  },
 });
 
-publicApp.get('/', async (c) => {
+publicApp.openapi(openapiRoute, (c) => {
+  return c.json(publicApp.getOpenAPIDocument({
+    openapi: '3.1.0',
+    info: { title: 'CF ShortURL API', version: '2.0.0' },
+  }));
+});
+
+const homepageRoute = createRoute({
+  method: 'get',
+  path: '/',
+  responses: {
+    200: { content: { 'text/html': { schema: z.string() } }, description: 'Homepage' },
+  },
+});
+
+publicApp.openapi(homepageRoute, async (c) => {
   const cache = caches.default;
   const cacheKey = new Request('https://cache/shorturl/homepage');
   const cached = await cache.match(cacheKey);
@@ -95,14 +109,19 @@ publicApp.get('/', async (c) => {
   return response;
 });
 
-publicApp.get('/favicon.ico', async (c) => {
-  const fav = await fetch('https://github.githubassets.com/favicons/favicon-dark.svg');
-  return new Response(fav.body, {
-    headers: { 'Content-Type': fav.headers.get('Content-Type') || 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' },
-  });
+const slugRoute = createRoute({
+  method: 'get',
+  path: '/{slug}',
+  request: { params: z.object({ slug: z.string() }) },
+  responses: {
+    200: { content: { 'text/html': { schema: z.string() } }, description: 'Short link response' },
+    301: { description: 'Redirect' },
+    302: { description: 'Redirect' },
+    404: { content: { 'text/html': { schema: z.string() } }, description: 'Not found' },
+  },
 });
 
-publicApp.get('/:slug', async (c) => {
+publicApp.openapi(slugRoute, async (c) => {
   const slug = c.req.param('slug');
   const env = c.env;
   const request = c.req.raw;

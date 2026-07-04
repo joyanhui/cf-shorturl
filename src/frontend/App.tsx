@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { type Locale, detectLocale, persistLocale } from './i18n';
 import { LoginPage } from './LoginPage';
 import { Dashboard } from './Dashboard';
@@ -50,9 +51,20 @@ export function App() {
     );
   }
 
-  if (!authed) {
-    return <LoginPage adminPath={adminPath} locale={locale} onLogin={() => setAuthed(true)} turnstileSiteKey={turnstileSiteKey} onToggleLang={toggleLang} defaultPath={adminPath === '/admin'} />;
-  }
-
-  return <Dashboard adminPath={adminPath} locale={locale} onLogout={handleLogout} onToggleLang={toggleLang} />;
+  return (
+    <BrowserRouter basename={adminPath}>
+      <Routes>
+        <Route path="/login" element={
+          !authed
+            ? <LoginPage adminPath={adminPath} locale={locale} onLogin={() => setAuthed(true)} turnstileSiteKey={turnstileSiteKey} onToggleLang={toggleLang} defaultPath={adminPath === '/admin'} />
+            : <Navigate to="/" replace />
+        } />
+        <Route path="/*" element={
+          authed
+            ? <Dashboard adminPath={adminPath} locale={locale} onLogout={handleLogout} onToggleLang={toggleLang} />
+            : <Navigate to="/login" replace />
+        } />
+      </Routes>
+    </BrowserRouter>
+  );
 }

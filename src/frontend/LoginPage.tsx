@@ -1,5 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
-import { type Locale, t, detectLocale, persistLocale, toggleLang } from './i18n';
+import { type Locale, t } from './i18n';
+import { Button } from '@/frontend/components/ui/button';
+import { Input } from '@/frontend/components/ui/input';
 
 interface LoginPageProps {
   adminPath: string;
@@ -9,6 +11,8 @@ interface LoginPageProps {
   onToggleLang: () => void;
   defaultPath?: boolean;
 }
+
+declare const turnstile: { getResponse(): string; reset(): void };
 
 export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onToggleLang, defaultPath }: LoginPageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -22,8 +26,8 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
     const password = (new FormData(e.currentTarget).get('password') as string) || '';
     try {
       const body: Record<string, string> = { password };
-      if (turnstileSiteKey && typeof (window as any).turnstile !== 'undefined') {
-        body.cfTurnstileResponse = (window as any).turnstile.getResponse();
+      if (turnstileSiteKey && typeof turnstile !== 'undefined') {
+        body.cfTurnstileResponse = turnstile.getResponse();
       }
       const res = await fetch(adminPath + '/api/login', {
         method: 'POST',
@@ -35,8 +39,8 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
       } else {
         const data = await res.json();
         setError(data.error || t(locale, 'login.error.invalid'));
-        if (turnstileSiteKey && typeof (window as any).turnstile !== 'undefined') {
-          (window as any).turnstile.reset();
+        if (turnstileSiteKey && typeof turnstile !== 'undefined') {
+          turnstile.reset();
         }
       }
     } catch {
@@ -47,52 +51,57 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
   }, [adminPath, locale, onLogin, turnstileSiteKey]);
 
   return (
-    <div className="login-wrapper">
-      <div className="login-card">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm">
         {defaultPath && (
-          <div style={{ marginBottom: '16px', padding: '12px', fontSize: '13px', color: '#9a6700', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '6px' }}>
+          <div className="mb-4 p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
             <strong>⚠ {t(locale, 'login.defaultPathWarning.title')}</strong><br />
             {t(locale, 'login.defaultPathWarning.body')}
           </div>
         )}
-        <h1>🔗 CF ShortURL</h1>
-        <p className="login-desc">{t(locale, 'login.title')}</p>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="password">{t(locale, 'login.password')}</label>
-            <input
-              ref={inputRef}
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              autoFocus
-              className="input"
-              placeholder={t(locale, 'login.placeholder')}
-            />
+        <div className="rounded-xl border bg-card p-8 shadow-sm">
+          <div className="text-center mb-6">
+            <h1 className="text-xl font-bold text-foreground">🔗 CF ShortURL</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t(locale, 'login.title')}</p>
           </div>
-          {turnstileSiteKey && (
-            <div className="cf-turnstile" data-sitekey={turnstileSiteKey} data-theme="light"></div>
-          )}
-          {error && <p className="error-msg">{error}</p>}
-          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-            {loading ? '...' : t(locale, 'login.signIn')}
-          </button>
-          <div className="text-center mt-3">
-            <button
-              type="button"
-              onClick={onToggleLang}
-              className="text-xs text-gray-400 hover:text-gray-600 underline decoration-dotted cursor-pointer border-0 bg-transparent"
-            >
-              {locale === 'zh' ? 'English' : '中文'}
-            </button>
-          </div>
-        </form>
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-4 p-3 text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-lg">{error}</div>
+            )}
+            <div className="mb-4">
+              <label htmlFor="password" className="block text-sm font-medium mb-1.5">{t(locale, 'login.password')}</label>
+              <Input
+                ref={inputRef}
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                autoFocus
+                placeholder={t(locale, 'login.placeholder')}
+              />
+            </div>
+            {turnstileSiteKey && (
+              <div className="cf-turnstile mb-4" data-sitekey={turnstileSiteKey} data-theme="light"></div>
+            )}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? '...' : t(locale, 'login.signIn')}
+            </Button>
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                onClick={onToggleLang}
+                className="text-xs text-muted-foreground hover:text-foreground underline decoration-dotted cursor-pointer border-0 bg-transparent"
+              >
+                {locale === 'zh' ? 'English' : '中文'}
+              </button>
+            </div>
+          </form>
+        </div>
+        {turnstileSiteKey && (
+          <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+        )}
       </div>
-      {turnstileSiteKey && (
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-      )}
     </div>
   );
 }
