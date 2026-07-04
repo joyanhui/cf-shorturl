@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { type Locale, t } from './i18n';
+import { type Locale, type MessageKey, t } from './i18n';
 import { Button } from '@/frontend/components/ui/button';
 import { Input } from '@/frontend/components/ui/input';
 import { Textarea } from '@/frontend/components/ui/textarea';
@@ -34,13 +34,16 @@ const PAGE_SIZE = 20;
 const MODE_FIELDS: Record<string, string> = { iframe: 'iframe', html: 'content', text: 'content' };
 
 export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { adminPath: string; locale: Locale; onLogout: () => void; onToggleLang: () => void }) {
-  const L = (key: string, p?: Record<string, string | number>) => t(locale, key, p);
+  const L = (key: MessageKey, p?: Record<string, string | number>) => t(locale, key, p);
+
+  const MODE_KEYS: Record<string, MessageKey> = {
+    redirect_302: 'links.mode.302', redirect_301: 'links.mode.301',
+    iframe: 'links.mode.iframe', html: 'links.mode.html', text: 'links.mode.text',
+  };
 
   function modeLabel(mode: string): string {
-    if (mode === 'redirect_302' || mode === 'redirect_301' || mode === 'iframe' || mode === 'html' || mode === 'text') {
-      return L('links.mode.' + mode);
-    }
-    return mode;
+    const k = MODE_KEYS[mode];
+    return k ? L(k) : mode;
   }
 
   const [links, setLinks] = useState<ShortLink[]>([]);

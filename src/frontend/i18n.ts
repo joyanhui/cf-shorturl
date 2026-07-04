@@ -1,6 +1,6 @@
 export type Locale = 'zh' | 'en';
 
-const messages: Record<string, Record<Locale, string>> = {
+const messages = {
   'site.title': { zh: 'CF ShortURL', en: 'CF ShortURL' },
   'login.title': { zh: '短链接管理系统', en: 'Short Link Manager' },
   'login.password': { zh: '管理员密码', en: 'Admin Password' },
@@ -107,9 +107,11 @@ const messages: Record<string, Record<Locale, string>> = {
   'error.deleteFailed': { zh: '删除失败', en: 'Delete failed' },
   'error.passwordChangeFailed': { zh: '修改失败', en: 'Password change failed' },
   'error.saveFailed': { zh: '保存失败', en: 'Save failed' },
-};
+} as const;
 
-export function t(locale: Locale, key: string, params?: Record<string, string | number>): string {
+export type MessageKey = keyof typeof messages;
+
+export function t(locale: Locale, key: MessageKey, params?: Record<string, string | number>): string {
   const msg = messages[key]?.[locale] || key;
   if (!params) return msg;
   return msg.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
