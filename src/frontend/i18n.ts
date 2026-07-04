@@ -48,6 +48,25 @@ const messages: Record<string, Record<Locale, string>> = {
   'pwd.success': { zh: '密码已修改', en: 'Password changed' },
   'logout.confirm': { zh: '确定退出登录吗？', en: 'Logout?' },
   'logout.confirmBtn': { zh: '退出', en: 'Logout' },
+  'homepage.badge': { zh: 'Cloudflare Workers', en: 'Cloudflare Workers' },
+  'homepage.title': { zh: 'CF ShortURL', en: 'CF ShortURL' },
+  'homepage.subtitle': { zh: '一款短链接管理系统，支持多种重定向模式、BasicAuth 保护和内置管理面板。', en: 'A short URL management system with multiple redirect modes, BasicAuth protection, and a built-in admin panel.' },
+  'homepage.adminPanel': { zh: '管理面板', en: 'Admin Panel' },
+  'homepage.feature1.title': { zh: '302 / 301 重定向', en: '302 / 301 Redirect' },
+  'homepage.feature1.desc': { zh: '临时或永久 URL 转发，支持边缘缓存。', en: 'Temporary or permanent URL forwarding with edge caching.' },
+  'homepage.feature2.title': { zh: 'Iframe 嵌入', en: 'Iframe Embed' },
+  'homepage.feature2.desc': { zh: '在 iframe 中隐藏目标 URL，支持可选 JS 注入。', en: 'Hide the target URL behind an iframe with optional JS injection.' },
+  'homepage.feature3.title': { zh: '文本 / HTML', en: 'Text / HTML' },
+  'homepage.feature3.desc': { zh: '通过短链接直接返回纯文本或 HTML 内容。', en: 'Return raw text or HTML content directly from the short link.' },
+  'homepage.feature4.title': { zh: 'BasicAuth 认证', en: 'BasicAuth' },
+  'homepage.feature4.desc': { zh: '为单个链接设置用户名密码认证保护。', en: 'Protect individual links with username/password authentication.' },
+  'homepage.feature5.title': { zh: '边缘缓存', en: 'Edge Cache' },
+  'homepage.feature5.desc': { zh: '响应在 Cloudflare 边缘节点缓存，全球快速访问。', en: 'Responses cached at Cloudflare edge for fast global access.' },
+  'homepage.feature6.title': { zh: '管理面板', en: 'Admin Panel' },
+  'homepage.feature6.desc': { zh: '内置 SPA，支持创建、编辑和管理短链接。', en: 'Built-in SPA for creating, editing, and managing short links.' },
+  'homepage.footer': { zh: '由 Cloudflare Workers 提供支持', en: 'Powered by Cloudflare Workers' },
+  'errorpage.message': { zh: '链接不存在', en: 'Link not found' },
+  'errorpage.hint': { zh: '请检查链接是否正确', en: 'Please check the URL and try again.' },
 };
 
 export function t(locale: Locale, key: string, params?: Record<string, string | number>): string {
@@ -56,7 +75,9 @@ export function t(locale: Locale, key: string, params?: Record<string, string | 
   return msg.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
 }
 
-export function detectLocale(): Locale {
+export function detectLocale(acceptLanguage?: string | null, cookie?: string | null): Locale {
+  if (cookie === 'zh' || cookie === 'en') return cookie;
+  if (acceptLanguage?.startsWith('zh')) return 'zh';
   if (typeof localStorage !== 'undefined') {
     const stored = localStorage.getItem('locale');
     if (stored === 'zh' || stored === 'en') return stored;
