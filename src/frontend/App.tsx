@@ -5,8 +5,7 @@ import { LoginPage } from './LoginPage';
 import { Dashboard } from './Dashboard';
 
 function getAdminPath(): string {
-  const p = window.location.pathname.replace(/\/+$/, '');
-  return p;
+  return (window as unknown as Record<string,string>).ADMIN_PATH ?? '/admin';
 }
 
 export function App() {

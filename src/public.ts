@@ -95,12 +95,11 @@ const homepageRoute = createRoute({
 });
 
 publicApp.openapi(homepageRoute, async (c) => {
+  const locale = getLocale(c.req.raw);
   const cache = caches.default;
-  const cacheKey = new Request('https://cache/shorturl/homepage');
+  const cacheKey = new Request('https://cache/shorturl/homepage?lang=' + locale);
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
-
-  const locale = getLocale(c.req.raw);
   const body = renderHtml(React.createElement(Homepage, { locale }));
   const response = new Response(body, {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },

@@ -38,8 +38,12 @@ adminApp.post('/api/links', requireAuth, async (c) => handleCreateLink(c.req.raw
 adminApp.put('/api/links', requireAuth, async (c) => handleUpdateLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
 adminApp.delete('/api/links', requireAuth, async (c) => handleDeleteLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
 
-adminApp.all('/*', () => new Response(adminHTML, {
-  headers: { 'Content-Type': 'text/html; charset=utf-8' },
-}));
+adminApp.all('/*', (c) => {
+  const adminPath = resolveAdminPath(c.env);
+  const html = adminHTML.replace('</head>', '<script>window.ADMIN_PATH=' + JSON.stringify(adminPath) + '</script></head>');
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
+});
 
 export { adminApp };
