@@ -16,11 +16,9 @@ export function LoginPage({ onLogin, turnstileSiteKey }: LoginPageProps) {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const form = new FormData(e.currentTarget);
-    const username = (form.get('username') as string) || '';
-    const password = (form.get('password') as string) || '';
+    const password = (new FormData(e.currentTarget).get('password') as string) || '';
     try {
-      const body: Record<string, string> = { username, password };
+      const body: Record<string, string> = { password };
       if (turnstileSiteKey && typeof (window as any).turnstile !== 'undefined') {
         body.cfTurnstileResponse = (window as any).turnstile.getResponse();
       }
@@ -52,19 +50,6 @@ export function LoginPage({ onLogin, turnstileSiteKey }: LoginPageProps) {
         <p className="login-desc">{t(locale, 'login.title')}</p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">{t(locale, 'login.username')}</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              autoComplete="username"
-              required
-              autoFocus
-              className="input"
-              placeholder={t(locale, 'login.usernamePlaceholder')}
-            />
-          </div>
-          <div className="form-group">
             <label htmlFor="password">{t(locale, 'login.password')}</label>
             <input
               ref={inputRef}
@@ -73,6 +58,7 @@ export function LoginPage({ onLogin, turnstileSiteKey }: LoginPageProps) {
               type="password"
               autoComplete="current-password"
               required
+              autoFocus
               className="input"
               placeholder={t(locale, 'login.placeholder')}
             />

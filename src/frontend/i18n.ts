@@ -3,12 +3,10 @@ export type Locale = 'zh' | 'en';
 const messages: Record<string, Record<Locale, string>> = {
   'site.title': { zh: 'CF ShortURL', en: 'CF ShortURL' },
   'login.title': { zh: '短链接管理系统', en: 'Short Link Manager' },
-  'login.username': { zh: '用户名', en: 'Username' },
-  'login.usernamePlaceholder': { zh: '请输入用户名', en: 'Enter username' },
   'login.password': { zh: '管理员密码', en: 'Admin Password' },
   'login.placeholder': { zh: '请输入密码', en: 'Enter password' },
   'login.signIn': { zh: '登录', en: 'Sign In' },
-  'login.error.invalid': { zh: '用户名或密码错误', en: 'Invalid username or password' },
+  'login.error.invalid': { zh: '密码错误', en: 'Invalid password' },
   'logout': { zh: '退出登录', en: 'Logout' },
   'nav.dashboard': { zh: '短链接', en: 'Links' },
   'links.search': { zh: '搜索 slug 或目标 URL...', en: 'Search slug or URL...' },

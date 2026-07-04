@@ -10,7 +10,9 @@ export function App() {
     fetch('/api/links?limit=1')
       .then(r => setAuthed(r.ok))
       .catch(() => setAuthed(false));
+  }, []);
 
+  useEffect(() => {
     fetch('/api/settings')
       .then(r => r.json())
       .then(s => setTurnstileSiteKey(s.turnstile_site_key || ''))
