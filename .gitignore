@@ -8,5 +8,5 @@ dist/
 *.tsbuildinfo
 .vscode/
 worker-configuration.d.ts
-favicon.ico
+
 

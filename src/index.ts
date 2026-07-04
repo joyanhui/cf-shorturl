@@ -17,7 +17,6 @@ function handleError(status: number, locale: Locale): Response {
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.get('/favicon.ico', (c) => c.body(null, 204));
 app.route('/', publicApp);
 
 app.notFound((c) => {

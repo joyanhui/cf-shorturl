@@ -10,6 +10,9 @@ import { getLink } from './lib/kv-fs';
 import type { ShortLink } from './lib/types';
 
 function getLocale(request: Request): Locale {
+  const url = new URL(request.url);
+  const q = url.searchParams.get('lang');
+  if (q === 'zh' || q === 'en') return q;
   const cookie = request.headers.get('Cookie');
   const localeCookie = cookie?.split(';').find(c => c.trim().startsWith('locale='))?.split('=')[1]?.trim();
   return detectLocale(request.headers.get('Accept-Language'), localeCookie);
