@@ -10,9 +10,6 @@
       "service": "kv-filesystem"
     }
   ],
-  "assets": {
-    "directory": "public"
-  },
   "observability": {
     "enabled": true
   }

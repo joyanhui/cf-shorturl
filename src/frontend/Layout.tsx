@@ -20,7 +20,6 @@ export function Layout({ title, children, scripts, lang = 'zh' }: LayoutProps) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{title}</title>
-        <link rel="icon" href="/favicon.ico" />
         <style dangerouslySetInnerHTML={{ __html: tailwindCSS }} />
         <script dangerouslySetInnerHTML={{ __html: LANG_SCRIPT }} />
       </head>
