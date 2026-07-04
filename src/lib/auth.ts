@@ -75,11 +75,11 @@ export function getTokenCookie(request: Request): string | null {
 }
 
 export function setTokenCookie(token: string, path = '/'): string {
-  return `admin_token=${token}; Path=${path}; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL}`;
+  return `admin_token=${token}; Path=${path}; SameSite=Lax; Max-Age=${SESSION_TTL}`;
 }
 
 export function clearTokenCookie(path = '/'): string {
-  return `admin_token=; Path=${path}; HttpOnly; SameSite=Lax; Max-Age=0`;
+  return `admin_token=; Path=${path}; SameSite=Lax; Max-Age=0`;
 }
 
 export function requireSessionResponse(): Response {

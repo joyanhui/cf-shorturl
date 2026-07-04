@@ -15,6 +15,7 @@ Bun + React + React Router + Hono + OpenAPI + Tailwind CSS + shadcn/ui + Zod。
 - **错误响应:** 统一 `Response.json({ error: string }, { status })`。
 - **Zod schema 集中定义**在 `src/schemas/index.ts`，API handler 和 OpenAPI 共用。
 - **前端代码集中在 `src/frontend/`**，SSR 组件（Homepage, ErrorPage, Layout）和 SPA（Dashboard 等）均在此目录。
+- **i18n 算法（SSR + SPA 共用）:** SSR 以 `Cookie → Accept-Language → 'en'` 顺序检测语言；SPA 以 `localStorage → navigator.language` 初始化，`useEffect` 同步到 `document.documentElement.lang` + localStorage + cookie，确保 SSR 页面刷新后 cookie 生效。
 - **构建:** `bun scripts/build.ts` 编译 Tailwind + esbuild 打包 SPA，产物内联到 `admin.gen.ts`。
 - **esbuild alias `@` → `src`**，shadcn 组件用 `npx shadcn@latest add` 添加到 `src/frontend/components/ui/`。
 
