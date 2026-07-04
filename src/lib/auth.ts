@@ -49,6 +49,19 @@ export async function verifyToken(env: Env, token: string): Promise<boolean> {
   return payload !== null;
 }
 
+let _cachedAdminPath: string | null = null;
+
+export function resolveAdminPath(env: Env): string {
+  if (_cachedAdminPath) return _cachedAdminPath;
+  let raw = env.ADMIN_PATH?.trim();
+  if (!raw) raw = '/admin';
+  if (!raw.startsWith('/')) raw = '/' + raw;
+  if (raw.endsWith('/') && raw.length > 1) raw = raw.slice(0, -1);
+  if (raw === '/') throw new Error('ADMIN_PATH cannot be "/". This would expose the admin panel at the root path.');
+  _cachedAdminPath = raw;
+  return raw;
+}
+
 // Cookie helpers
 export function getTokenCookie(request: Request): string | null {
   const cookie = request.headers.get('Cookie') || '';

@@ -10,8 +10,11 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@hono/zod-openapi": "^1.4.0",
+    "hono": "^4.12.27",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "zod": "^3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5",

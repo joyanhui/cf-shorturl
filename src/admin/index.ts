@@ -1,56 +1,45 @@
+import { Hono, type Context, type Next } from 'hono';
 import type { Env } from '../types';
+import type { ExecutionContext } from '@cloudflare/workers-types';
 import { checkAuth } from './auth';
-import { requireSessionResponse } from '../lib/auth';
+import { requireSessionResponse, resolveAdminPath } from '../lib/auth';
 import { handleLogin, handleLogout } from './api_login';
 import { handleListLinks, handleCreateLink, handleUpdateLink, handleDeleteLink } from './api_links';
 import { handleChangePassword } from './api_change_password';
 import { handleGetSettings, handleUpdateSettings } from './api_settings';
 import { adminHTML } from '../frontend/admin.gen';
 
-export async function adminHandler(request: Request, env: Env, ctx: ExecutionContext, adminPath: string): Promise<Response> {
-  const url = new URL(request.url);
-  const path = url.pathname;
-  const method = request.method;
-
-  const apiPrefix = adminPath + '/api';
-
-  if (path === apiPrefix + '/login') {
-    if (method === 'POST') return handleLogin(request, env, adminPath);
-    if (method === 'DELETE') return handleLogout(adminPath);
-    return new Response('Method Not Allowed', { status: 405 });
-  }
-
-  // Public endpoints (no auth required)
-  if (path === apiPrefix + '/check' && method === 'GET') {
-    const authed = await checkAuth(request, env);
-    return Response.json({ authed });
-  }
-  if (path === apiPrefix + '/settings' && method === 'GET') {
-    return handleGetSettings(request, env);
-  }
-
-  const authed = await checkAuth(request, env);
+async function requireAuth(c: Context<{ Bindings: Env }>, next: Next) {
+  const authed = await checkAuth(c.req.raw, c.env);
   if (!authed) return requireSessionResponse();
-
-  if (path === apiPrefix + '/change-password') {
-    if (method === 'POST') return handleChangePassword(request, env);
-    return new Response('Method Not Allowed', { status: 405 });
-  }
-
-  if (path === apiPrefix + '/settings' && method === 'PUT') {
-    return handleUpdateSettings(request, env);
-  }
-
-  if (path === apiPrefix + '/links') {
-    if (method === 'GET') return handleListLinks(request, env, ctx);
-    if (method === 'POST') return handleCreateLink(request, env, ctx);
-    if (method === 'PUT') return handleUpdateLink(request, env, ctx);
-    if (method === 'DELETE') return handleDeleteLink(request, env, ctx);
-    return new Response('Method Not Allowed', { status: 405 });
-  }
-
-  // Serve SPA HTML for all other admin paths
-  return new Response(adminHTML, {
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-  });
+  await next();
 }
+
+const adminApp = new Hono<{ Bindings: Env }>();
+
+adminApp.post('/api/login', async (c) => {
+  const adminPath = resolveAdminPath(c.env);
+  return handleLogin(c.req.raw, c.env, adminPath);
+});
+adminApp.delete('/api/login', async (c) => {
+  const adminPath = resolveAdminPath(c.env);
+  return handleLogout(adminPath);
+});
+adminApp.get('/api/check', async (c) => {
+  const authed = await checkAuth(c.req.raw, c.env);
+  return c.json({ authed });
+});
+adminApp.get('/api/settings', async (c) => handleGetSettings(c.req.raw, c.env));
+
+adminApp.post('/api/change-password', requireAuth, async (c) => handleChangePassword(c.req.raw, c.env));
+adminApp.put('/api/settings', requireAuth, async (c) => handleUpdateSettings(c.req.raw, c.env));
+adminApp.get('/api/links', requireAuth, async (c) => handleListLinks(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
+adminApp.post('/api/links', requireAuth, async (c) => handleCreateLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
+adminApp.put('/api/links', requireAuth, async (c) => handleUpdateLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
+adminApp.delete('/api/links', requireAuth, async (c) => handleDeleteLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
+
+adminApp.all('/*', () => new Response(adminHTML, {
+  headers: { 'Content-Type': 'text/html; charset=utf-8' },
+}));
+
+export { adminApp };
