@@ -25,7 +25,7 @@ export function App() {
 
   useEffect(() => {
     fetch(adminPath + '/api/check')
-      .then(r => r.json())
+      .then(r => r.json() as Promise<{ authed: boolean }>)
       .then(d => { setAuthed(d.authed); if (d.authed) fetchSettings(); })
       .catch(() => setAuthed(false));
     fetchSettings();
@@ -33,13 +33,15 @@ export function App() {
 
   function fetchSettings() {
     fetch(adminPath + '/api/settings')
-      .then(r => r.json())
+      .then(r => r.json() as Promise<{ turnstile_site_key?: string }>)
       .then(s => setTurnstileSiteKey(s.turnstile_site_key || ''))
       .catch(() => {});
   }
 
   const handleLogout = async () => {
-    await fetch(adminPath + '/api/login', { method: 'DELETE' });
+    try {
+      await fetch(adminPath + '/api/login', { method: 'DELETE' });
+    } catch {}
     setAuthed(false);
   };
 

@@ -115,32 +115,32 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
 
   const handleLinkSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    const data: Record<string, any> = {
+    const body: Record<string, string | undefined> = {
       url: formUrl, mode: formMode,
       title: formTitle || undefined, inject_js: formJs || undefined,
       content: formContent || undefined, content_type: formContentType || undefined,
       basic_auth_username: formAuthUser || undefined, basic_auth_password: formAuthPass || undefined,
     };
     if (!editing) {
-      data.slug = formSlug || undefined;
+      body.slug = formSlug || undefined;
     } else {
-      data.slug = editSlug;
+      body.slug = editSlug;
     }
     try {
       const res = await fetch(adminPath + '/api/links', {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const err = await res.json();
+        const err: { error?: string } = await res.json();
         alert('错误: ' + (err.error || '操作失败'));
         return;
       }
       setShowLinkModal(false);
       loadLinks();
-    } catch (err: any) {
-      alert('网络错误: ' + err.message);
+    } catch (err: unknown) {
+      alert('网络错误: ' + (err instanceof Error ? err.message : '未知错误'));
     }
   }, [formSlug, formUrl, formMode, formTitle, formJs, formContent, formContentType, formAuthUser, formAuthPass, editing, editSlug, loadLinks]);
 
@@ -149,14 +149,14 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
     try {
       const res = await fetch(adminPath + '/api/links?slug=' + encodeURIComponent(showDelete), { method: 'DELETE' });
       if (!res.ok) {
-        const err = await res.json();
+        const err: { error?: string } = await res.json();
         alert('删除失败: ' + (err.error || '未知错误'));
         return;
       }
       setShowDelete(null);
       loadLinks();
-    } catch (err: any) {
-      alert('网络错误: ' + err.message);
+    } catch (err: unknown) {
+      alert('网络错误: ' + (err instanceof Error ? err.message : '未知错误'));
     }
   }, [showDelete, loadLinks]);
 
@@ -168,7 +168,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }),
     });
-    const data = await res.json();
+    const data: { error?: string } = await res.json();
     if (res.ok) { alert(L('pwd.success')); setShowPwd(false); setOldPwd(''); setNewPwd(''); setConfirmPwd(''); }
     else { alert(data.error || '修改失败'); }
   }, [oldPwd, newPwd, confirmPwd, locale]);
@@ -184,12 +184,12 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       }),
     });
     if (res.ok) { alert(L('settings.saved')); setShowSettings(false); }
-    else { alert('保存失败'); }
+    else { const data: { error?: string } = await res.json(); alert(data.error || '保存失败'); }
   }, [turnstileSiteKey, turnstileSecretKey, locale]);
 
   const openSettings = useCallback(async () => {
     const res = await fetch(adminPath + '/api/settings');
-    const s = await res.json();
+    const s: { turnstile_site_key?: string; turnstile_secret_key?: string } = await res.json();
     setTurnstileSiteKey(s.turnstile_site_key || '');
     setTurnstileSecretKey(s.turnstile_secret_key || '');
     setShowSettings(true);
@@ -292,7 +292,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
         )}
       </div>
 
-      <Dialog open={showLinkModal} onOpenChange={o => { if (!o) setShowLinkModal(false); }}>
+      <Dialog open={showLinkModal} onOpenChange={(o: boolean) => { if (!o) setShowLinkModal(false); }}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? '编辑短链接' : '新建短链接'}</DialogTitle>
@@ -366,7 +366,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!showDelete} onOpenChange={o => { if (!o) setShowDelete(null); }}>
+      <Dialog open={!!showDelete} onOpenChange={(o: boolean) => { if (!o) setShowDelete(null); }}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>
@@ -379,7 +379,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showPwd} onOpenChange={o => { if (!o) setShowPwd(false); }}>
+      <Dialog open={showPwd} onOpenChange={(o: boolean) => { if (!o) setShowPwd(false); }}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>修改密码</DialogTitle>
@@ -407,7 +407,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showSettings} onOpenChange={o => { if (!o) setShowSettings(false); }}>
+      <Dialog open={showSettings} onOpenChange={(o: boolean) => { if (!o) setShowSettings(false); }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>系统设置</DialogTitle>
@@ -440,7 +440,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showLogout} onOpenChange={o => { if (!o) setShowLogout(false); }}>
+      <Dialog open={showLogout} onOpenChange={(o: boolean) => { if (!o) setShowLogout(false); }}>
         <DialogContent className="sm:max-w-[350px]">
           <DialogHeader>
             <DialogTitle>退出登录</DialogTitle>

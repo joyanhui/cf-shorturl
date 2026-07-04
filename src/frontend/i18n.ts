@@ -51,7 +51,6 @@ const messages: Record<string, Record<Locale, string>> = {
   'homepage.badge': { zh: 'Cloudflare Workers', en: 'Cloudflare Workers' },
   'homepage.title': { zh: 'CF ShortURL', en: 'CF ShortURL' },
   'homepage.subtitle': { zh: '一款短链接管理系统，支持多种重定向模式、BasicAuth 保护和内置管理面板。', en: 'A short URL management system with multiple redirect modes, BasicAuth protection, and a built-in admin panel.' },
-  'homepage.adminPanel': { zh: '管理面板', en: 'Admin Panel' },
   'homepage.feature1.title': { zh: '302 / 301 重定向', en: '302 / 301 Redirect' },
   'homepage.feature1.desc': { zh: '临时或永久 URL 转发，支持边缘缓存。', en: 'Temporary or permanent URL forwarding with edge caching.' },
   'homepage.feature2.title': { zh: 'Iframe 嵌入', en: 'Iframe Embed' },

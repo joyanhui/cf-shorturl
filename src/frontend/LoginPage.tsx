@@ -37,7 +37,7 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
       if (res.ok) {
         onLogin();
       } else {
-        const data = await res.json();
+        const data: { error?: string } = await res.json();
         setError(data.error || t(locale, 'login.error.invalid'));
         if (turnstileSiteKey && typeof turnstile !== 'undefined') {
           turnstile.reset();
