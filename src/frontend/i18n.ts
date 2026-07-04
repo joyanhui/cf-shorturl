@@ -55,7 +55,25 @@ export function t(locale: Locale, key: string, params?: Record<string, string | 
 }
 
 export function detectLocale(): Locale {
-  if (typeof navigator === 'undefined') return 'zh';
-  const nav = navigator.language || '';
-  return nav.startsWith('zh') ? 'zh' : 'en';
+  if (typeof localStorage !== 'undefined') {
+    const stored = localStorage.getItem('locale');
+    if (stored === 'zh' || stored === 'en') return stored;
+  }
+  if (typeof navigator !== 'undefined') {
+    const nav = navigator.language || '';
+    if (nav.startsWith('zh')) return 'zh';
+  }
+  return 'en';
 }
+
+export function persistLocale(locale: Locale): void {
+  try { localStorage.setItem('locale', locale); } catch {}
+  document.cookie = 'locale=' + locale + ';Path=/;SameSite=Lax';
+  document.documentElement.lang = locale;
+}
+
+export function toggleLang(locale: Locale): Locale {
+  return locale === 'zh' ? 'en' : 'zh';
+}
+
+export const LANG_SCRIPT = '(function(){var l;try{l=localStorage.getItem("locale")}catch{}if(l==="zh"||l==="en"){document.documentElement.lang=l;document.cookie="locale="+l+";Path=/;SameSite=Lax"}else{var n=navigator.language||"";l=n.startsWith("zh")?"zh":"en";try{localStorage.setItem("locale",l)}catch{}document.documentElement.lang=l}})()';

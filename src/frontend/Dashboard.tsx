@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { type Locale, t, detectLocale } from './i18n';
+import { type Locale, t } from './i18n';
 
 interface ShortLink {
   slug: string;
@@ -31,8 +31,7 @@ const MODE_LABELS: Record<string, string> = {
 
 const MODE_FIELDS: Record<string, string> = { iframe: 'iframe', html: 'content', text: 'content' };
 
-export function Dashboard({ onLogout }: { onLogout: () => void }) {
-  const [locale] = useState<Locale>(detectLocale);
+export function Dashboard({ locale, onLogout, onToggleLang }: { locale: Locale; onLogout: () => void; onToggleLang: () => void }) {
   const L = (key: string, p?: Record<string, string | number>) => t(locale, key, p);
 
   const [links, setLinks] = useState<ShortLink[]>([]);
@@ -216,6 +215,13 @@ export function Dashboard({ onLogout }: { onLogout: () => void }) {
           <button className="btn btn-outline" onClick={() => { setOldPwd(''); setNewPwd(''); setConfirmPwd(''); setShowPwd(true); }}>修改密码</button>
           <button className="btn btn-outline btn-outline-danger" onClick={() => setShowLogout(true)}>退出</button>
           <button className="btn btn-primary" onClick={openCreate}>+ 新建</button>
+          <button
+            type="button"
+            onClick={onToggleLang}
+            className="text-xs text-gray-400 hover:text-gray-600 underline decoration-dotted cursor-pointer border-0 bg-transparent"
+          >
+            {locale === 'zh' ? 'English' : '中文'}
+          </button>
         </div>
       </div>
 

@@ -17,6 +17,15 @@ export async function adminHandler(request: Request, env: Env, ctx: ExecutionCon
     return new Response('Method Not Allowed', { status: 405 });
   }
 
+  // Public endpoints (no auth required)
+  if (path === '/api/check' && method === 'GET') {
+    const authed = await checkAuth(request, env);
+    return Response.json({ authed });
+  }
+  if (path === '/api/settings' && method === 'GET') {
+    return handleGetSettings(request, env);
+  }
+
   const authed = await checkAuth(request, env);
   if (!authed) return requireSessionResponse();
 
@@ -25,10 +34,8 @@ export async function adminHandler(request: Request, env: Env, ctx: ExecutionCon
     return new Response('Method Not Allowed', { status: 405 });
   }
 
-  if (path === '/api/settings') {
-    if (method === 'GET') return handleGetSettings(request, env);
-    if (method === 'PUT') return handleUpdateSettings(request, env);
-    return new Response('Method Not Allowed', { status: 405 });
+  if (path === '/api/settings' && method === 'PUT') {
+    return handleUpdateSettings(request, env);
   }
 
   if (path === '/api/links') {

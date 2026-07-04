@@ -17,6 +17,14 @@ export default {
     }
 
     try {
+      // Favicon (proxy from GitHub)
+      if (path === '/favicon.ico') {
+        const fav = await fetch('https://github.githubassets.com/favicons/favicon-dark.svg');
+        return new Response(fav.body, {
+          headers: { 'Content-Type': fav.headers.get('Content-Type') || 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' },
+        });
+      }
+
       // API routes
       if (path.startsWith('/api/')) {
         return adminHandler(request, env, ctx);

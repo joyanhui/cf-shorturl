@@ -1,13 +1,14 @@
 import { useRef, useState, useCallback } from 'react';
-import { type Locale, t, detectLocale } from './i18n';
+import { type Locale, t, detectLocale, persistLocale, toggleLang } from './i18n';
 
 interface LoginPageProps {
+  locale: Locale;
   onLogin: () => void;
   turnstileSiteKey?: string;
+  onToggleLang: () => void;
 }
 
-export function LoginPage({ onLogin, turnstileSiteKey }: LoginPageProps) {
-  const [locale] = useState<Locale>(detectLocale);
+export function LoginPage({ locale, onLogin, turnstileSiteKey, onToggleLang }: LoginPageProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -70,6 +71,15 @@ export function LoginPage({ onLogin, turnstileSiteKey }: LoginPageProps) {
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
             {loading ? '...' : t(locale, 'login.signIn')}
           </button>
+          <div className="text-center mt-3">
+            <button
+              type="button"
+              onClick={onToggleLang}
+              className="text-xs text-gray-400 hover:text-gray-600 underline decoration-dotted cursor-pointer border-0 bg-transparent"
+            >
+              {locale === 'zh' ? 'English' : '中文'}
+            </button>
+          </div>
         </form>
       </div>
       {turnstileSiteKey && (
