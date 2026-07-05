@@ -134,7 +134,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       title: formTitle || undefined, inject_js: formJs || undefined,
       content: formContent || undefined, content_type: formContentType || undefined,
       basic_auth_username: formAuthUser || undefined, basic_auth_password: formAuthPass || undefined,
-      remark: formRemark,
+      remark: formRemark || undefined,
     };
     if (!editing) {
       body.slug = formSlug || undefined;
@@ -157,7 +157,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
     } catch (err: unknown) {
       alert(L('error.network') + ': ' + (err instanceof Error ? err.message : L('error.unknown')));
     }
-  }, [formSlug, formUrl, formMode, formTitle, formJs, formContent, formContentType, formAuthUser, formAuthPass, editing, editSlug, loadLinks]);
+  }, [formSlug, formUrl, formMode, formTitle, formJs, formContent, formContentType, formAuthUser, formAuthPass, formRemark, editing, editSlug, loadLinks]);
 
   const handleDelete = useCallback(async () => {
     if (!showDelete) return;

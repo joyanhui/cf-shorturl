@@ -62,7 +62,9 @@ Content-Type: application/json
   "content": "<h1>Hello</h1>",
   "content_type": "text/html",
   "basic_auth_username": "admin",
-  "basic_auth_password": "secret"
+  "basic_auth_password": "secret",
+  "remark": "备注文字",
+  "sort_order": 1734567890
 }
 ```
 
@@ -76,6 +78,8 @@ Content-Type: application/json
 | `content` | 否 | text/html 模式返回内容 |
 | `content_type` | 否 | 自定义 Content-Type |
 | `basic_auth_username` / `basic_auth_password` | 否 | BasicAuth 保护 |
+| `remark` | 否 | 备注，存储于 JSON body（不依赖响应 header） |
+| `sort_order` | 否 | 排序权重（置顶用），建议用 `Date.now()` |
 
 ### 更新
 
@@ -83,7 +87,7 @@ Content-Type: application/json
 PUT /api/links
 Content-Type: application/json
 
-{ "slug": "abc123", "url": "https://new-url.com", "mode": "redirect_301" }
+{ "slug": "abc123", "url": "https://new-url.com", "mode": "redirect_301", "remark": "新备注" }
 ```
 
 清空 auth：将 `basic_auth_username` 和 `basic_auth_password` 设为空字符串。
