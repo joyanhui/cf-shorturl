@@ -107,19 +107,7 @@ async function fsGetJSON<T>(env: Env, pkey: string): Promise<T | null> {
   return JSON.parse(new TextDecoder().decode(buf)) as T;
 }
 
-function stripMeta(link: Record<string, unknown>): void {
-  delete link.sort_order;
-  delete link.remark;
-}
 
-function parseMetaFromResponse<T>(value: T, res: Response): T & { sort_order?: number; remark?: string } {
-  const link = value as Record<string, unknown>;
-  const sortOrder = parseInt(res.headers.get('X-KV-Meta-Sort-Order') || '', 10);
-  if (!isNaN(sortOrder)) link.sort_order = sortOrder;
-  const remark = res.headers.get('X-KV-Meta-Remark');
-  if (remark) link.remark = remark;
-  return link as T & { sort_order?: number; remark?: string };
-}
 
 // --- Links index management ---
 const INDEX_CACHE_TTL = 60_000;
@@ -128,19 +116,7 @@ async function getLinksIndex(env: Env): Promise<string[]> {
   let slugs = mcGet<string[]>(PKEY_LINKS_INDEX);
   if (slugs) return slugs;
   const data = await fsGetJSON<string[]>(env, PKEY_LINKS_INDEX);
-  if (data) {
-    slugs = data;
-  } else {
-    const oldKey = PREFIX + 'links:index';
-    const oldData = await fsGetJSON<string[]>(env, oldKey);
-    if (oldData) {
-      slugs = oldData;
-      await fsPutJSON(env, PKEY_LINKS_INDEX, slugs);
-      await fsDelete(env, oldKey);
-    } else {
-      slugs = [];
-    }
-  }
+  slugs = data || [];
   mcSet(PKEY_LINKS_INDEX, slugs, INDEX_CACHE_TTL);
   return slugs;
 }
@@ -189,7 +165,10 @@ export async function getLink(env: Env, slug: string): Promise<ShortLink | null>
   if (!res.ok) return null;
   const buf = await res.arrayBuffer();
   const link = JSON.parse(new TextDecoder().decode(buf)) as ShortLink;
-  parseMetaFromResponse(link, res);
+  const remarkHdr = res.headers.get('X-KV-Meta-Remark');
+  if (!link.remark && remarkHdr) link.remark = remarkHdr;
+  const sortOrderHdr = res.headers.get('X-KV-Meta-Sort-Order');
+  if (!link.sort_order && sortOrderHdr) link.sort_order = parseInt(sortOrderHdr, 10) || undefined;
   return link;
 }
 
@@ -223,14 +202,13 @@ export async function createLink(env: Env, input: CreateLinkInput): Promise<Shor
     content_type: input.content_type,
     basic_auth_username: input.basic_auth_username || undefined,
     basic_auth_password: input.basic_auth_password || undefined,
+    remark: input.remark || undefined,
+    sort_order: input.sort_order,
     created_at: now,
     updated_at: now,
   };
 
-  const qp: Record<string, string> = {};
-  if (input.remark) qp.remark = input.remark;
-  if (input.sort_order !== undefined) qp.sort_order = String(input.sort_order);
-  await fsPutJSON(env, PKEY_LINK(slug), link, Object.keys(qp).length ? qp : undefined);
+  await fsPutJSON(env, PKEY_LINK(slug), link);
   const slugs = await getLinksIndex(env);
   slugs.unshift(slug);
   await saveLinksIndex(env, slugs);
@@ -259,11 +237,7 @@ export async function updateLink(env: Env, input: UpdateLinkInput): Promise<Shor
   if (input.remark !== undefined) link.remark = input.remark;
 
   link.updated_at = new Date().toISOString();
-  const qp: Record<string, string> = {};
-  if (input.remark !== undefined) qp.remark = input.remark || '';
-  const body = { ...link };
-  stripMeta(body);
-  await fsPutJSON(env, PKEY_LINK(input.slug), body, Object.keys(qp).length ? qp : undefined);
+  await fsPutJSON(env, PKEY_LINK(input.slug), link);
   return link;
 }
 
@@ -283,18 +257,12 @@ export async function deleteLink(env: Env, slug: string): Promise<boolean> {
 export async function togglePinLink(env: Env, slug: string): Promise<ShortLink | null> {
   const link = await getLink(env, slug);
   if (!link) return null;
-  const isPinned = !!link.sort_order;
-  const qp: Record<string, string> = {};
-  if (isPinned) {
-    qp.sort_order = '';
+  if (link.sort_order) {
     delete link.sort_order;
   } else {
-    qp.sort_order = String(Date.now());
     link.sort_order = Date.now();
   }
-  const body = { ...link };
-  stripMeta(body);
-  await fsPutJSON(env, PKEY_LINK(slug), body, qp);
+  await fsPutJSON(env, PKEY_LINK(slug), link);
   return link;
 }
 
