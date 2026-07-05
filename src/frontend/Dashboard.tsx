@@ -6,7 +6,7 @@ import { Textarea } from '@/frontend/components/ui/textarea';
 import { Badge } from '@/frontend/components/ui/badge';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/frontend/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/frontend/components/ui/dialog';
-import { Search, Plus, Settings, Key, LogOut, Edit3, Trash2, Dice6, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Search, Plus, Settings, LogOut, Edit3, Trash2, Dice6, ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 interface ShortLink {
   slug: string;
@@ -74,12 +74,6 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const [turnstileSecretKey, setTurnstileSecretKey] = useState('');
 
-  const [oldPwd, setOldPwd] = useState('');
-  const [newPwd, setNewPwd] = useState('');
-  const [confirmPwd, setConfirmPwd] = useState('');
-  const [showOldPwd, setShowOldPwd] = useState(false);
-  const [showNewPwd, setShowNewPwd] = useState(false);
-  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [showFormAuthPass, setShowFormAuthPass] = useState(false);
   const [showSettingsSecret, setShowSettingsSecret] = useState(false);
 
@@ -170,19 +164,6 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
     }
   }, [showDelete, loadLinks]);
 
-  const handleChangePassword = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPwd !== confirmPwd) { alert(L('pwd.mismatch')); return; }
-    const res = await fetch(adminPath + '/api/change-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ oldPassword: oldPwd, newPassword: newPwd }),
-    });
-    const data: { error?: string } = await res.json();
-    if (res.ok) { alert(L('pwd.success')); setShowPwd(false); setOldPwd(''); setNewPwd(''); setConfirmPwd(''); }
-    else { alert(data.error || L('error.passwordChangeFailed')); }
-  }, [oldPwd, newPwd, confirmPwd, locale]);
-
   const handleSaveSettings = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     const res = await fetch(adminPath + '/api/settings', {
@@ -227,7 +208,6 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={openSettings}><Settings className="h-4 w-4 mr-1" />{L('dashboard.settingsBtn')}</Button>
-          <Button variant="outline" size="sm" onClick={() => { setOldPwd(''); setNewPwd(''); setConfirmPwd(''); setShowPwd(true); }}><Key className="h-4 w-4 mr-1" />{L('dashboard.pwdBtn')}</Button>
           <Button variant="outline" size="sm" onClick={() => setShowLogout(true)}><LogOut className="h-4 w-4 mr-1" />{L('dashboard.logoutBtn')}</Button>
           <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" />{L('dashboard.newBtn')}</Button>
           <button onClick={onToggleLang} className="text-xs text-muted-foreground hover:text-foreground underline decoration-dotted cursor-pointer border-0 bg-transparent">
@@ -391,49 +371,6 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
             <Button variant="outline" onClick={() => setShowDelete(null)}>{L('modal.cancel')}</Button>
             <Button variant="destructive" onClick={handleDelete}>{L('modal.deleteBtn')}</Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showPwd} onOpenChange={(o: boolean) => { if (!o) setShowPwd(false); }}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>{L('pwd.title')}</DialogTitle>
-          </DialogHeader>
-          <form id="pwdForm" onSubmit={handleChangePassword}>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">{L('pwd.old')}</label>
-                <div className="relative">
-                  <Input type={showOldPwd ? 'text' : 'password'} autoComplete="current-password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} className="pr-10" />
-                  <button type="button" onClick={() => setShowOldPwd(!showOldPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
-                    {showOldPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{L('pwd.new')}</label>
-                <div className="relative">
-                  <Input type={showNewPwd ? 'text' : 'password'} autoComplete="new-password" value={newPwd} onChange={e => setNewPwd(e.target.value)} className="pr-10" />
-                  <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
-                    {showNewPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">{L('pwd.confirm')}</label>
-                <div className="relative">
-                  <Input type={showConfirmPwd ? 'text' : 'password'} autoComplete="new-password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} className="pr-10" />
-                  <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
-                    {showConfirmPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button variant="outline" type="button" onClick={() => setShowPwd(false)}>{L('modal.cancel')}</Button>
-              <Button type="submit">{L('pwd.submitBtn')}</Button>
-            </DialogFooter>
-          </form>
         </DialogContent>
       </Dialog>
 

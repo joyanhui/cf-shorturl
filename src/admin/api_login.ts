@@ -1,16 +1,9 @@
 import type { Env } from '../types';
-import { initAdmin, verifyAdmin, signToken, setTokenCookie, clearTokenCookie } from '../lib/auth';
+import { verifyPassword, signToken, setTokenCookie, clearTokenCookie } from '../lib/auth';
 import { getSettings } from '../lib/kv-fs';
 import { LoginBody } from '../schemas';
 
 export async function handleLogin(request: Request, env: Env, adminPath: string): Promise<Response> {
-  try {
-    await initAdmin(env);
-  } catch (e) {
-    console.error('initAdmin failed:', e);
-    return Response.json({ error: '存储服务不可用，请检查 KV_FS_API_KEY 配置' }, { status: 503 });
-  }
-
   const parsed = LoginBody.safeParse(await request.json());
   if (!parsed.success) {
     return Response.json({ error: parsed.error.errors[0]?.message || '参数错误' }, { status: 400 });
@@ -35,8 +28,11 @@ export async function handleLogin(request: Request, env: Env, adminPath: string)
     }
   }
 
-  const ok = await verifyAdmin(env, password);
-  if (!ok) {
+  const pwResult = verifyPassword(env, password);
+  if (pwResult === 'unset') {
+    return Response.json({ error: '管理员密码未配置。请在 Cloudflare Dashboard 将 ADMIN_PASSWORD 设为 Secret (加密变量) 类型。' }, { status: 503 });
+  }
+  if (pwResult === 'wrong') {
     return Response.json({ error: '密码错误' }, { status: 403 });
   }
 

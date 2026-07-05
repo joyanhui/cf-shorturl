@@ -1,42 +1,16 @@
 import type { Env } from '../types';
-import { getAdminConfig, setAdminConfig } from './kv-fs';
 import { createJWT, verifyJWT } from '../jwt';
 
 const SESSION_TTL = 86400;
 
-let adminInitialized = false;
-
-async function hashPassword(password: string): Promise<string> {
-  const data = new TextEncoder().encode(password);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+export function getAdminPassword(env: Env): string | null {
+  return env.ADMIN_PASSWORD?.trim() || null;
 }
 
-export async function initAdmin(env: Env): Promise<void> {
-  if (adminInitialized) return;
-  const existing = await getAdminConfig(env);
-  if (!existing) {
-    const hash = await hashPassword('admin');
-    await setAdminConfig(env, hash);
-  }
-  adminInitialized = true;
-}
-
-export async function verifyAdmin(env: Env, password: string): Promise<boolean> {
-  const storedHash = await getAdminConfig(env);
-  if (!storedHash) return false;
-  const inputHash = await hashPassword(password);
-  return inputHash === storedHash;
-}
-
-export async function changePassword(env: Env, oldPassword: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
-  const storedHash = await getAdminConfig(env);
-  if (!storedHash) return { ok: false, error: '原密码错误' };
-  const oldHash = await hashPassword(oldPassword);
-  if (oldHash !== storedHash) return { ok: false, error: '原密码错误' };
-  const newHash = await hashPassword(newPassword);
-  await setAdminConfig(env, newHash);
-  return { ok: true };
+export function verifyPassword(env: Env, password: string): 'ok' | 'wrong' | 'unset' {
+  const pwd = getAdminPassword(env);
+  if (!pwd) return 'unset';
+  return password === pwd ? 'ok' : 'wrong';
 }
 
 // JWT token management (stateless)
