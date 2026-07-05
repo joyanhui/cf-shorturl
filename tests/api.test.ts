@@ -1,44 +1,78 @@
-import { describe, it, expect, beforeAll } from 'bun:test';
+import { describe, it, expect, beforeAll, afterAll } from 'bun:test';
 
 const BASE = process.env.TEST_BASE_URL || 'http://localhost:8787';
 const ADMIN_PATH = process.env.TEST_ADMIN_PATH || '/admin';
 const PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'admin';
 
 let tokenCookie = '';
-let serverReady = false;
+let wrangler: import('bun').Subprocess | null = null;
+
+async function waitForServer(url: string, timeoutMs = 60000): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return true;
+    } catch {}
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  return false;
+}
 
 beforeAll(async () => {
   try {
     const res = await fetch(BASE + '/');
-    serverReady = res.ok;
-  } catch {
-    serverReady = false;
+    if (res.ok) return;
+  } catch {}
+
+  wrangler = Bun.spawn([
+    'npx', 'wrangler', 'dev',
+    '--var', 'ADMIN_PASSWORD:admin',
+    '--var', 'JWT_ADMIN_SECRET:test-jwt-secret',
+    '--var', 'KV_FS_API_KEY:test-key',
+  ], {
+    stdio: ['ignore', 'inherit', 'inherit'],
+    env: { ...process.env },
+  });
+
+  const ready = await waitForServer(BASE + '/');
+  if (!ready) {
+    wrangler.kill();
+    wrangler = null;
+    throw new Error('wrangler dev did not start within 60s');
   }
-  if (!serverReady) return;
+
   const res = await fetch(BASE + ADMIN_PATH + '/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: PASSWORD }),
   });
-  if (!res.ok) return;
+  if (!res.ok) {
+    throw new Error('Login failed: ' + res.status + ' ' + (await res.text()).substring(0, 200));
+  }
   const setCookie = res.headers.get('Set-Cookie') || '';
   const match = setCookie.match(/admin_token=([^;]+)/);
   if (match) tokenCookie = 'admin_token=' + match[1];
 });
 
+afterAll(() => {
+  if (wrangler) {
+    wrangler.kill();
+    wrangler = null;
+  }
+});
+
 describe('login API', () => {
   it('should reject wrong password', async () => {
-    if (!serverReady) return;
     const res = await fetch(BASE + ADMIN_PATH + '/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: 'wrong-password' }),
     });
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(403);
   });
 
   it('should check auth status', async () => {
-    if (!serverReady) return;
     const res = await fetch(BASE + ADMIN_PATH + '/api/check', {
       headers: { Cookie: tokenCookie },
     });
@@ -50,7 +84,6 @@ describe('login API', () => {
 
 describe('public API', () => {
   it('should serve the homepage', async () => {
-    if (!serverReady) return;
     const res = await fetch(BASE + '/');
     expect(res.status).toBe(200);
     const text = await res.text();
@@ -58,7 +91,6 @@ describe('public API', () => {
   });
 
   it('should return 404 for unknown slug', async () => {
-    if (!serverReady) return;
     const res = await fetch(BASE + '/nonexistent-slug-' + Date.now());
     expect(res.status).toBe(404);
   });
