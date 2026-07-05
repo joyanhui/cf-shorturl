@@ -8,6 +8,7 @@ import { ErrorPage } from './frontend/ErrorPage';
 import { detectLocale, type Locale } from './frontend/i18n';
 import { getLink } from './lib/kv-fs';
 import type { ShortLink } from './lib/types';
+import { BUILD_ID } from './build';
 
 function getLocale(request: Request): Locale {
   const url = new URL(request.url);
@@ -100,7 +101,7 @@ const homepageRoute = createRoute({
 publicApp.openapi(homepageRoute, async (c) => {
   const locale = getLocale(c.req.raw);
   const cache = caches.default;
-  const cacheKey = new Request('https://cache/shorturl/homepage?lang=' + locale);
+  const cacheKey = new Request(`https://cache/shorturl/homepage?lang=${locale}&v=${BUILD_ID}`);
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
   const body = renderHtml(React.createElement(Homepage, { locale }));
