@@ -27,9 +27,11 @@ export function Layout({ title, children, scripts, lang = 'zh', footerText }: La
       </head>
       <body className="min-h-screen flex flex-col">
         <main className="flex-1">{children}</main>
-        <div className="border-t border-gray-100 py-6 text-center text-xs text-gray-400 space-y-2">
-          {footerText && <p>{footerText}</p>}
-          <a href={href} className="text-gray-400 hover:text-gray-600 no-underline">{label}</a>
+        <div className="border-t border-gray-100 py-6 text-center text-xs text-gray-400">
+          <div className="flex items-center justify-center gap-3">
+            {footerText && <span>{footerText}</span>}
+            <a href={href} className="text-gray-400 hover:text-gray-600 no-underline">{label}</a>
+          </div>
         </div>
         {scripts?.map((s, i) => (
           <script key={i} dangerouslySetInnerHTML={{ __html: s.content }} />
