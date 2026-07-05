@@ -44,6 +44,9 @@ Cloudflare Dashboard 配置：
 
 ## 环境变量（全部设为 Secret 类型）
 
+管理员密码通过 `ADMIN_PASSWORD` 环境变量控制，不经过 D1 存储，以此简化设计（无需修改密码逻辑）。
+
+- `ADMIN_PASSWORD` — 管理员登录密码（空值时禁止登录）
 - `JWT_ADMIN_SECRET` — 管理员 JWT 签名密钥
 - `KV_FS_API_KEY` — kv-filesystem 的 API Key
 
@@ -56,7 +59,7 @@ Cloudflare Dashboard 配置：
 | 文件 | 作用 |
 |---|---|
 | `src/index.ts` | Worker 入口 + Hono 路由分发（公开 app + admin 子路由） |
-| `src/types.ts` | 环境变量类型（Env: KV_FILESYSTEM, KV_FS_API_KEY, JWT_ADMIN_SECRET） |
+| `src/types.ts` | 环境变量类型（Env: KV_FILESYSTEM, KV_FS_API_KEY, JWT_ADMIN_SECRET, ADMIN_PASSWORD 等） |
 | `src/schemas/index.ts` | Zod schema（CreateLinkBody, UpdateLinkBody, LoginBody, SiteSettings 等） |
 | `src/jwt.ts` | HMAC-SHA256 JWT 签发/验签原语 |
 | `src/render.tsx` | React SSR 渲染辅助（renderHtml） |
