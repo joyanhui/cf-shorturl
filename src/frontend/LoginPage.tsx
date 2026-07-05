@@ -95,6 +95,11 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? '...' : t(locale, 'login.signIn')}
             </Button>
+            <p className="mt-4 text-xs text-muted-foreground text-center">
+              {t(locale, 'login.defaultPassword')}：<code className="px-1.5 py-0.5 rounded bg-muted">admin</code>
+              &nbsp;·&nbsp;
+              <a href="https://github.com/joyanhui/cf-shorturl/tree/main/docs/recover-password.md" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground underline decoration-dotted transition-colors">{t(locale, 'login.forgotPassword')}</a>
+            </p>
             <div className="text-center mt-3">
               <button
                 type="button"

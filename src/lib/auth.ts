@@ -16,7 +16,7 @@ export async function initAdmin(env: Env): Promise<void> {
   if (adminInitialized) return;
   const existing = await getAdminConfig(env);
   if (!existing) {
-    const hash = await hashPassword('admin888');
+    const hash = await hashPassword('admin');
     await setAdminConfig(env, hash);
   }
   adminInitialized = true;
