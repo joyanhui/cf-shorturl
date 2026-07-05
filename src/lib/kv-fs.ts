@@ -104,7 +104,13 @@ async function fsDelete(env: Env, pkey: string): Promise<boolean> {
 async function fsGetJSON<T>(env: Env, pkey: string): Promise<T | null> {
   const buf = await fsGetArrayBuffer(env, pkey);
   if (!buf) return null;
-  return JSON.parse(new TextDecoder().decode(buf)) as T;
+  const text = new TextDecoder().decode(buf).trim();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
 }
 
 
@@ -164,7 +170,13 @@ export async function getLink(env: Env, slug: string): Promise<ShortLink | null>
   const res = await fsFetch(env, 'GET', PKEY_LINK(slug));
   if (!res.ok) return null;
   const buf = await res.arrayBuffer();
-  const link = JSON.parse(new TextDecoder().decode(buf)) as ShortLink;
+  if (!buf || buf.byteLength === 0) return null;
+  let link: ShortLink;
+  try {
+    link = JSON.parse(new TextDecoder().decode(buf)) as ShortLink;
+  } catch {
+    return null;
+  }
   const remarkHdr = res.headers.get('X-KV-Meta-Remark');
   if (!link.remark && remarkHdr) link.remark = remarkHdr;
   const sortOrderHdr = res.headers.get('X-KV-Meta-Sort-Order');
@@ -244,13 +256,13 @@ export async function updateLink(env: Env, input: UpdateLinkInput): Promise<Shor
 export async function deleteLink(env: Env, slug: string): Promise<boolean> {
   const existing = await getLink(env, slug);
   if (!existing) return false;
-  await fsDelete(env, PKEY_LINK(slug));
   const slugs = await getLinksIndex(env);
   const idx = slugs.indexOf(slug);
   if (idx !== -1) {
     slugs.splice(idx, 1);
     await saveLinksIndex(env, slugs);
   }
+  await fsDelete(env, PKEY_LINK(slug));
   return true;
 }
 

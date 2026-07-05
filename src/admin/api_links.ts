@@ -25,7 +25,14 @@ export async function handleListLinks(request: Request, env: Env, ctx: Execution
 }
 
 export async function handleCreateLink(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-  const parsed = CreateLinkBody.safeParse(await request.json());
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch (e) {
+    const text = await request.text().catch(() => '');
+    return Response.json({ error: 'Invalid JSON: ' + (e instanceof Error ? e.message : String(e)) + ', body: ' + text.substring(0, 200) }, { status: 400 });
+  }
+  const parsed = CreateLinkBody.safeParse(body);
   if (!parsed.success) {
     const msg = parsed.error.errors[0]?.message || '参数错误';
     return Response.json({ error: msg }, { status: 400 });
