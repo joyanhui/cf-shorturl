@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "bun run build && wrangler dev",
     "build": "bun scripts/build.ts",
+    "test": "bun test tests/core.test.ts",
+    "test:integration": "bun test tests/api.test.ts",
     "preview": "bun run build && wrangler dev --ip 0.0.0.0",
     "cf-typegen": "wrangler types"
   },

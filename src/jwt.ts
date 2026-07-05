@@ -50,7 +50,7 @@ export async function verifyJWT(token: string, secret: string): Promise<Record<s
     if (!valid) return null;
 
     const payload = JSON.parse(new TextDecoder().decode(base64urlDecode(parts[1])));
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+    if (payload.exp && payload.exp <= Math.floor(Date.now() / 1000)) return null;
 
     return payload;
   } catch {
