@@ -21,7 +21,7 @@ export const ShortLink = z.object({
 export type ShortLinkT = z.infer<typeof ShortLink>;
 
 export const CreateLinkBody = z.object({
-  slug: z.string().regex(/^[a-zA-Z0-9\-_.~]+$/).max(255).optional(),
+  slug: z.string().regex(/^[a-zA-Z0-9\-_.~]+$/).max(255).refine(s => s !== '_index', { message: 'Slug "_index" 是保留名称' }).optional(),
   url: z.string().refine((u) => u.startsWith('http://') || u.startsWith('https://'), {
     message: 'URL 必须以 http:// 或 https:// 开头',
   }),

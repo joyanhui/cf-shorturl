@@ -2,7 +2,7 @@ import type { Env } from '../types';
 import type { ShortLink, CreateLinkInput, UpdateLinkInput, SiteSettings } from './types';
 
 const PREFIX = 'shorturl_';
-const PKEY_LINKS_INDEX = PREFIX + 'links:index';
+const PKEY_LINKS_INDEX = PREFIX + 'links:_index';
 const PKEY_LINK = (slug: string) => PREFIX + 'link:' + slug;
 const PKEY_CONFIG_SETTINGS = PREFIX + 'config:settings';
 
@@ -26,6 +26,7 @@ function safeUrlScheme(url: string): boolean {
 }
 
 export function validateSlug(slug: string): string | null {
+  if (slug === '_index') return 'Slug "_index" 是保留名称，不可使用';
   if (slug.length > 255) return 'Slug 最长 255 个字符';
   if (!/^[a-zA-Z0-9\-_.~]+$/.test(slug)) return 'Slug 只能包含字母、数字、- _ . ~';
   return null;
@@ -127,7 +128,19 @@ async function getLinksIndex(env: Env): Promise<string[]> {
   let slugs = mcGet<string[]>(PKEY_LINKS_INDEX);
   if (slugs) return slugs;
   const data = await fsGetJSON<string[]>(env, PKEY_LINKS_INDEX);
-  slugs = data || [];
+  if (data) {
+    slugs = data;
+  } else {
+    const oldKey = PREFIX + 'links:index';
+    const oldData = await fsGetJSON<string[]>(env, oldKey);
+    if (oldData) {
+      slugs = oldData;
+      await fsPutJSON(env, PKEY_LINKS_INDEX, slugs);
+      await fsDelete(env, oldKey);
+    } else {
+      slugs = [];
+    }
+  }
   mcSet(PKEY_LINKS_INDEX, slugs, INDEX_CACHE_TTL);
   return slugs;
 }
