@@ -37,7 +37,7 @@ export const CreateLinkBody = z.object({
 export type CreateLinkBodyT = z.infer<typeof CreateLinkBody>;
 
 export const UpdateLinkBody = z.object({
-  slug: z.string().min(1),
+  slug: z.string().min(1).refine(s => s !== '_index', { message: 'Slug "_index" 是保留名称' }),
   url: z.string().refine((u) => u.startsWith('http://') || u.startsWith('https://'), {
     message: 'URL 必须以 http:// 或 https:// 开头',
   }).optional(),
