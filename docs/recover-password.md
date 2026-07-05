@@ -1,43 +1,28 @@
-# 找回管理员密码
+# 找回/重置管理员密码
 
-管理员密码以 SHA-256 哈希存储在 kv-filesystem 的 D1 数据库中，key 为 `shorturl_config:admin_password`。
+管理员密码通过 `ADMIN_PASSWORD` 环境变量（Secret 类型）控制。
 
-## 方法一：Cloudflare Dashboard
+## 方法一：Cloudflare Dashboard（推荐）
 
-1. 打开 [Cloudflare Dashboard](https://dash.cloudflare.com/) → Workers & Pages → `kv-filesystem`
-2. 进入 **D1** 标签页 → 点 `kv-filesystem` 数据库
-3. 点 **Console** 按钮打开 SQL 控制台
-4. 查询当前密码哈希：
-   ```sql
-   SELECT value FROM config WHERE name = 'shorturl_config:admin_password';
-   ```
-5. 重置新密码（将 `admin` 替换为实际密码，在本地计算 SHA-256 后填入）：
-   ```sql
-   INSERT OR REPLACE INTO config VALUES('shorturl_config:admin_password','"<SHA256_HASH>"');
-   ```
+1. 打开 [Cloudflare Dashboard](https://dash.cloudflare.com/) → Workers & Pages → `cf-shorturl`
+2. 进入 **Settings → Variables**
+3. 找到 `ADMIN_PASSWORD`，点击 **Edit** 修改值
+4. 或删除该变量后重新添加（勾选 **Secret** 类型）
+5. 修改后触发一次重新部署（推送任意 commit 或点 Save and Deploy）
 
-## 方法二：kv-filesystem 管理面板
-
-1. 登录 kv-filesystem 管理后台
-2. 在文件列表中找到 `shorturl_config:admin_password` 条目
-3. **修改：** 编辑该条目，将内容替换为新的 SHA-256 哈希值（本地计算：`echo -n "NEW_PASSWORD" | sha256sum`）
-4. **或删除：** 删除该条目后，cf-shorturl 下次登录时会自动回退到默认密码 `admin`
-
-## 方法三：wrangler CLI
-
-确保本地已登录 Cloudflare 账号：
+## 方法二：wrangler CLI
 
 ```sh
-npx wrangler d1 execute kv-filesystem --remote --command "SELECT value FROM config WHERE name = 'shorturl_config:admin_password';"
+echo "NEW_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD --name cf-shorturl
 ```
 
-重置密码（将 `NEW_PASSWORD` 替换为实际密码）：
-
+然后推送代码触发重新部署：
 ```sh
-HASH=$(echo -n "NEW_PASSWORD" | sha256sum | cut -d' ' -f1)
-npx wrangler d1 execute kv-filesystem --remote --command "INSERT OR REPLACE INTO config VALUES('shorturl_config:admin_password','\"$HASH\"');"
+git commit --allow-empty -m "redeploy to apply new ADMIN_PASSWORD" && git push
 ```
 
-## 默认密码
+## 说明
 
-首次部署后未手动设置过密码时，默认密码为 `admin`。
+- `ADMIN_PASSWORD` 为空时，登录 API 返回 503 错误，禁止登录
+- 以前存储在 kv-filesystem D1 `shorturl_config:admin_password` 中的密码已不再使用
+
