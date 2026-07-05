@@ -25,8 +25,8 @@ export function Layout({ title, children, scripts, lang = 'zh', footerText }: La
         <style dangerouslySetInnerHTML={{ __html: tailwindCSS }} />
         <script dangerouslySetInnerHTML={{ __html: LANG_SCRIPT }} />
       </head>
-      <body>
-        {children}
+      <body className="min-h-screen flex flex-col">
+        <main className="flex-1">{children}</main>
         <div className="border-t border-gray-100 py-6 text-center text-xs text-gray-400 space-y-2">
           {footerText && <p>{footerText}</p>}
           <a href={href} className="text-gray-400 hover:text-gray-600 no-underline">{label}</a>

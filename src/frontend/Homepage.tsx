@@ -8,7 +8,7 @@ interface HomepageProps {
 export function Homepage({ locale }: HomepageProps) {
   return (
     <Layout title="CF ShortURL" lang={locale} footerText={t(locale, 'homepage.footer')}>
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="h-full bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-4xl mx-auto px-6 py-20 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-semibold mb-6">
             {t(locale, 'homepage.badge')}
