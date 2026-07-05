@@ -16,7 +16,14 @@
    INSERT OR REPLACE INTO config VALUES('shorturl_config:admin_password','"<SHA256_HASH>"');
    ```
 
-## 方法二：wrangler CLI
+## 方法二：kv-filesystem 管理面板
+
+1. 登录 kv-filesystem 管理后台
+2. 在文件列表中找到 `shorturl_config:admin_password` 条目
+3. **修改：** 编辑该条目，将内容替换为新的 SHA-256 哈希值（本地计算：`echo -n "NEW_PASSWORD" | sha256sum`）
+4. **或删除：** 删除该条目后，cf-shorturl 下次登录时会自动回退到默认密码 `admin`
+
+## 方法三：wrangler CLI
 
 确保本地已登录 Cloudflare 账号：
 
