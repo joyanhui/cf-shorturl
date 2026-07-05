@@ -6,7 +6,7 @@ import { Textarea } from '@/frontend/components/ui/textarea';
 import { Badge } from '@/frontend/components/ui/badge';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/frontend/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/frontend/components/ui/dialog';
-import { Search, Plus, Settings, Key, LogOut, Edit3, Trash2, Dice6, ExternalLink } from 'lucide-react';
+import { Search, Plus, Settings, Key, LogOut, Edit3, Trash2, Dice6, ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 interface ShortLink {
   slug: string;
@@ -77,6 +77,11 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [confirmPwd, setConfirmPwd] = useState('');
+  const [showOldPwd, setShowOldPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+  const [showFormAuthPass, setShowFormAuthPass] = useState(false);
+  const [showSettingsSecret, setShowSettingsSecret] = useState(false);
 
   const loadLinks = useCallback(async () => {
     setLoading(true);
@@ -358,7 +363,12 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{L('modal.password')}</label>
-                    <Input value={formAuthPass} onChange={e => setFormAuthPass(e.target.value)} />
+                    <div className="relative">
+                      <Input type={showFormAuthPass ? 'text' : 'password'} value={formAuthPass} onChange={e => setFormAuthPass(e.target.value)} className="pr-10" />
+                      <button type="button" onClick={() => setShowFormAuthPass(!showFormAuthPass)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
+                        {showFormAuthPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </details>
@@ -393,15 +403,30 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">{L('pwd.old')}</label>
-                <Input type="password" autoComplete="current-password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} />
+                <div className="relative">
+                  <Input type={showOldPwd ? 'text' : 'password'} autoComplete="current-password" value={oldPwd} onChange={e => setOldPwd(e.target.value)} className="pr-10" />
+                  <button type="button" onClick={() => setShowOldPwd(!showOldPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
+                    {showOldPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{L('pwd.new')}</label>
-                <Input type="password" autoComplete="new-password" value={newPwd} onChange={e => setNewPwd(e.target.value)} />
+                <div className="relative">
+                  <Input type={showNewPwd ? 'text' : 'password'} autoComplete="new-password" value={newPwd} onChange={e => setNewPwd(e.target.value)} className="pr-10" />
+                  <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
+                    {showNewPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{L('pwd.confirm')}</label>
-                <Input type="password" autoComplete="new-password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} />
+                <div className="relative">
+                  <Input type={showConfirmPwd ? 'text' : 'password'} autoComplete="new-password" value={confirmPwd} onChange={e => setConfirmPwd(e.target.value)} className="pr-10" />
+                  <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
+                    {showConfirmPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             </div>
             <DialogFooter className="mt-6">
@@ -425,7 +450,12 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{L('settings.secretKey')}</label>
-                <Input type="password" placeholder={L('settings.turnstilePlaceholder')} value={turnstileSecretKey} onChange={e => setTurnstileSecretKey(e.target.value)} />
+                <div className="relative">
+                  <Input type={showSettingsSecret ? 'text' : 'password'} placeholder={L('settings.turnstilePlaceholder')} value={turnstileSecretKey} onChange={e => setTurnstileSecretKey(e.target.value)} className="pr-10" />
+                  <button type="button" onClick={() => setShowSettingsSecret(!showSettingsSecret)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
+                    {showSettingsSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">{L('settings.hint')}</p>
               </div>
               <div className="border-t border-border pt-4">

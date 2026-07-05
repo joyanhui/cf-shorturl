@@ -4,7 +4,7 @@ import type { ShortLink, CreateLinkInput, UpdateLinkInput, SiteSettings } from '
 const PREFIX = 'shorturl_';
 const PKEY_LINKS_INDEX = PREFIX + 'links:index';
 const PKEY_LINK = (slug: string) => PREFIX + 'link:' + slug;
-const PKEY_CONFIG_ADMIN = PREFIX + 'config:admin';
+const PKEY_CONFIG_ADMIN_PASSWORD = PREFIX + 'config:admin_password';
 const PKEY_CONFIG_SETTINGS = PREFIX + 'config:settings';
 
 const VALID_MODES = new Set(['redirect_302', 'redirect_301', 'iframe', 'text', 'html']);
@@ -235,17 +235,17 @@ export async function deleteLink(env: Env, slug: string): Promise<boolean> {
 // --- Admin config ---
 const ADMIN_CONFIG_CACHE_TTL = 300_000;
 
-export async function getAdminConfig(env: Env): Promise<{ username: string; passwordHash: string } | null> {
-  let cfg = mcGet<{ username: string; passwordHash: string }>(PKEY_CONFIG_ADMIN);
+export async function getAdminConfig(env: Env): Promise<string | null> {
+  let cfg = mcGet<string>(PKEY_CONFIG_ADMIN_PASSWORD);
   if (cfg) return cfg;
-  cfg = await fsGetJSON<{ username: string; passwordHash: string }>(env, PKEY_CONFIG_ADMIN);
-  if (cfg) mcSet(PKEY_CONFIG_ADMIN, cfg, ADMIN_CONFIG_CACHE_TTL);
+  cfg = await fsGetJSON<string>(env, PKEY_CONFIG_ADMIN_PASSWORD);
+  if (cfg) mcSet(PKEY_CONFIG_ADMIN_PASSWORD, cfg, ADMIN_CONFIG_CACHE_TTL);
   return cfg || null;
 }
 
-export async function setAdminConfig(env: Env, data: { username: string; passwordHash: string }): Promise<void> {
-  await fsPutJSON(env, PKEY_CONFIG_ADMIN, data);
-  mcSet(PKEY_CONFIG_ADMIN, data, ADMIN_CONFIG_CACHE_TTL);
+export async function setAdminConfig(env: Env, hash: string): Promise<void> {
+  await fsPutJSON(env, PKEY_CONFIG_ADMIN_PASSWORD, hash);
+  mcSet(PKEY_CONFIG_ADMIN_PASSWORD, hash, ADMIN_CONFIG_CACHE_TTL);
 }
 
 // --- Site settings ---

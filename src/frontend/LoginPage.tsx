@@ -2,6 +2,7 @@ import { useRef, useState, useCallback } from 'react';
 import { type Locale, t } from './i18n';
 import { Button } from '@/frontend/components/ui/button';
 import { Input } from '@/frontend/components/ui/input';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginPageProps {
   adminPath: string;
@@ -18,6 +19,7 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -70,16 +72,22 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
             )}
             <div className="mb-4">
               <label htmlFor="password" className="block text-sm font-medium mb-1.5">{t(locale, 'login.password')}</label>
-              <Input
-                ref={inputRef}
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                autoFocus
-                placeholder={t(locale, 'login.placeholder')}
-              />
+              <div className="relative">
+                <Input
+                  ref={inputRef}
+                  id="password"
+                  name="password"
+                  type={showPwd ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  autoFocus
+                  placeholder={t(locale, 'login.placeholder')}
+                  className="pr-10"
+                />
+                <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer border-0 bg-transparent p-0">
+                  {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             {turnstileSiteKey && (
               <div className="cf-turnstile mb-4" data-sitekey={turnstileSiteKey} data-theme="light"></div>

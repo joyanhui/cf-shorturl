@@ -17,25 +17,25 @@ export async function initAdmin(env: Env): Promise<void> {
   const existing = await getAdminConfig(env);
   if (!existing) {
     const hash = await hashPassword('admin888');
-    await setAdminConfig(env, { username: 'admin', passwordHash: hash });
+    await setAdminConfig(env, hash);
   }
   adminInitialized = true;
 }
 
 export async function verifyAdmin(env: Env, password: string): Promise<boolean> {
-  const data = await getAdminConfig(env);
-  if (!data) return false;
+  const storedHash = await getAdminConfig(env);
+  if (!storedHash) return false;
   const inputHash = await hashPassword(password);
-  return inputHash === data.passwordHash;
+  return inputHash === storedHash;
 }
 
 export async function changePassword(env: Env, oldPassword: string, newPassword: string): Promise<{ ok: boolean; error?: string }> {
-  const data = await getAdminConfig(env);
-  if (!data) return { ok: false, error: '原密码错误' };
+  const storedHash = await getAdminConfig(env);
+  if (!storedHash) return { ok: false, error: '原密码错误' };
   const oldHash = await hashPassword(oldPassword);
-  if (oldHash !== data.passwordHash) return { ok: false, error: '原密码错误' };
+  if (oldHash !== storedHash) return { ok: false, error: '原密码错误' };
   const newHash = await hashPassword(newPassword);
-  await setAdminConfig(env, { ...data, passwordHash: newHash });
+  await setAdminConfig(env, newHash);
   return { ok: true };
 }
 
