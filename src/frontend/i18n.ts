@@ -118,6 +118,9 @@ const messages = {
   'error.deleteFailed': { zh: '删除失败', en: 'Delete failed' },
   'error.passwordChangeFailed': { zh: '修改失败', en: 'Password change failed' },
   'error.saveFailed': { zh: '保存失败', en: 'Save failed' },
+  'links.thRemark': { zh: '备注', en: 'Remark' },
+  'modal.remark': { zh: '备注', en: 'Remark' },
+  'modal.remarkPlaceholder': { zh: '可选备注信息', en: 'Optional remark' },
 } as const;
 
 export type MessageKey = keyof typeof messages;

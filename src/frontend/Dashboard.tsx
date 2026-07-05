@@ -19,6 +19,7 @@ interface ShortLink {
   basic_auth_username?: string;
   basic_auth_password?: string;
   sort_order?: number;
+  remark?: string;
   created_at: string;
   updated_at: string;
 }
@@ -71,6 +72,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   const [formContentType, setFormContentType] = useState('');
   const [formAuthUser, setFormAuthUser] = useState('');
   const [formAuthPass, setFormAuthPass] = useState('');
+  const [formRemark, setFormRemark] = useState('');
 
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
   const [turnstileSecretKey, setTurnstileSecretKey] = useState('');
@@ -108,7 +110,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
     setEditing(false);
     setFormSlug(''); setFormUrl(''); setFormMode('redirect_302');
     setFormTitle(''); setFormJs(''); setFormContent(''); setFormContentType('');
-    setFormAuthUser(''); setFormAuthPass('');
+    setFormAuthUser(''); setFormAuthPass(''); setFormRemark('');
     setShowLinkModal(true);
   }, []);
 
@@ -121,6 +123,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
     setFormTitle(link.title || ''); setFormJs(link.inject_js || '');
     setFormContent(link.content || ''); setFormContentType(link.content_type || '');
     setFormAuthUser(link.basic_auth_username || ''); setFormAuthPass(link.basic_auth_password || '');
+    setFormRemark(link.remark || '');
     setShowLinkModal(true);
   }, []);
 
@@ -131,6 +134,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
       title: formTitle || undefined, inject_js: formJs || undefined,
       content: formContent || undefined, content_type: formContentType || undefined,
       basic_auth_username: formAuthUser || undefined, basic_auth_password: formAuthPass || undefined,
+      remark: formRemark,
     };
     if (!editing) {
       body.slug = formSlug || undefined;
@@ -243,6 +247,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
               <TableRow>
                 <TableHead>{L('links.thSlug')}</TableHead>
                 <TableHead>{L('links.thUrl')}</TableHead>
+                <TableHead>{L('links.thRemark')}</TableHead>
                 <TableHead>{L('links.thMode')}</TableHead>
                 <TableHead>{L('links.thAuth')}</TableHead>
                 <TableHead>{L('links.thCreated')}</TableHead>
@@ -251,9 +256,9 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">{L('links.loading')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">{L('links.loading')}</TableCell></TableRow>
               ) : links.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">{L('links.empty')}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">{L('links.empty')}</TableCell></TableRow>
               ) : links.map(link => (
                 <TableRow key={link.slug}>
                   <TableCell>
@@ -262,6 +267,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
                     </a>
                   </TableCell>
                   <TableCell className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap" title={link.url}>{link.url}</TableCell>
+                  <TableCell className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap" title={link.remark || ''}>{link.remark || <span className="text-muted-foreground">—</span>}</TableCell>
                   <TableCell><Badge variant="outline">{modeLabel(link.mode)}</Badge></TableCell>
                   <TableCell>
                     {link.basic_auth_username && link.basic_auth_password
@@ -345,6 +351,10 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
                   </div>
                 </div>
               )}
+              <div>
+                <label className="block text-sm font-medium mb-1">{L('modal.remark')}</label>
+                <Input placeholder={L('modal.remarkPlaceholder')} value={formRemark} onChange={e => setFormRemark(e.target.value)} />
+              </div>
               <details className="border border-border rounded-lg p-3">
                 <summary className="text-sm font-medium cursor-pointer text-muted-foreground hover:text-foreground">{L('modal.basicAuth')}</summary>
                 <div className="mt-3 space-y-3">

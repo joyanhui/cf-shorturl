@@ -13,6 +13,7 @@ export interface ShortLink {
   basic_auth_username?: string;
   basic_auth_password?: string;
   sort_order?: number;
+  remark?: string;
   created_at: string;
   updated_at: string;
 }
@@ -27,6 +28,7 @@ export interface CreateLinkInput {
   content_type?: string;
   basic_auth_username?: string;
   basic_auth_password?: string;
+  remark?: string;
 }
 
 export interface UpdateLinkInput {
@@ -39,6 +41,7 @@ export interface UpdateLinkInput {
   content_type?: string;
   basic_auth_username?: string;
   basic_auth_password?: string;
+  remark?: string;
 }
 
 export interface SiteSettings {

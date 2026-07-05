@@ -13,6 +13,8 @@ export const ShortLink = z.object({
   content_type: z.string().optional(),
   basic_auth_username: z.string().optional(),
   basic_auth_password: z.string().optional(),
+  sort_order: z.number().optional(),
+  remark: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -30,6 +32,7 @@ export const CreateLinkBody = z.object({
   content_type: z.string().optional(),
   basic_auth_username: z.string().optional(),
   basic_auth_password: z.string().optional(),
+  remark: z.string().optional(),
 });
 export type CreateLinkBodyT = z.infer<typeof CreateLinkBody>;
 
@@ -45,6 +48,7 @@ export const UpdateLinkBody = z.object({
   content_type: z.string().optional(),
   basic_auth_username: z.string().optional(),
   basic_auth_password: z.string().optional(),
+  remark: z.string().optional(),
 });
 export type UpdateLinkBodyT = z.infer<typeof UpdateLinkBody>;
 

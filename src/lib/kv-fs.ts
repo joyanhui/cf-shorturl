@@ -64,8 +64,12 @@ function mcDel(key: string): void {
 }
 
 // --- Generic kv-filesystem fetch ---
-async function fsFetch(env: Env, method: string, pkey: string, body?: ArrayBuffer | string): Promise<Response> {
-  const url = `https://internal/api/v1/${encodeURIComponent(pkey)}`;
+async function fsFetch(env: Env, method: string, pkey: string, body?: ArrayBuffer | string, queryParams?: Record<string, string>): Promise<Response> {
+  let url = `https://internal/api/v1/${encodeURIComponent(pkey)}`;
+  if (queryParams) {
+    const qs = new URLSearchParams(queryParams).toString();
+    if (qs) url += '?' + qs;
+  }
   const headers: Record<string, string> = {
     'X-API-Key': env.KV_FS_API_KEY,
   };
@@ -85,9 +89,9 @@ async function fsGetArrayBuffer(env: Env, pkey: string): Promise<ArrayBuffer | n
   return res.arrayBuffer();
 }
 
-async function fsPutJSON(env: Env, pkey: string, data: unknown): Promise<void> {
+async function fsPutJSON(env: Env, pkey: string, data: unknown, queryParams?: Record<string, string>): Promise<void> {
   const body = new TextEncoder().encode(JSON.stringify(data)).buffer;
-  const res = await fsFetch(env, 'PUT', pkey, body);
+  const res = await fsFetch(env, 'PUT', pkey, body, queryParams);
   if (!res.ok) throw new Error(`kv-fs write failed for ${pkey}: ${res.status}`);
 }
 
@@ -100,6 +104,20 @@ async function fsGetJSON<T>(env: Env, pkey: string): Promise<T | null> {
   const buf = await fsGetArrayBuffer(env, pkey);
   if (!buf) return null;
   return JSON.parse(new TextDecoder().decode(buf)) as T;
+}
+
+function stripMeta(link: Record<string, unknown>): void {
+  delete link.sort_order;
+  delete link.remark;
+}
+
+function parseMetaFromResponse<T>(value: T, res: Response): T & { sort_order?: number; remark?: string } {
+  const link = value as Record<string, unknown>;
+  const sortOrder = parseInt(res.headers.get('X-KV-Meta-Sort-Order') || '', 10);
+  if (!isNaN(sortOrder)) link.sort_order = sortOrder;
+  const remark = res.headers.get('X-KV-Meta-Remark');
+  if (remark) link.remark = remark;
+  return link as T & { sort_order?: number; remark?: string };
 }
 
 // --- Links index management ---
@@ -138,7 +156,7 @@ export async function listLinks(env: Env, options?: ListLinksOptions): Promise<L
   if (options?.search) {
     const q = options.search.toLowerCase();
     filtered = filtered.filter(
-      (l) => l.slug.toLowerCase().includes(q) || l.url.toLowerCase().includes(q)
+      (l) => l.slug.toLowerCase().includes(q) || l.url.toLowerCase().includes(q) || (l.remark && l.remark.toLowerCase().includes(q))
     );
   }
   if (options?.mode) {
@@ -154,7 +172,12 @@ export async function listLinks(env: Env, options?: ListLinksOptions): Promise<L
 }
 
 export async function getLink(env: Env, slug: string): Promise<ShortLink | null> {
-  return fsGetJSON<ShortLink>(env, PKEY_LINK(slug));
+  const res = await fsFetch(env, 'GET', PKEY_LINK(slug));
+  if (!res.ok) return null;
+  const buf = await res.arrayBuffer();
+  const link = JSON.parse(new TextDecoder().decode(buf)) as ShortLink;
+  parseMetaFromResponse(link, res);
+  return link;
 }
 
 export async function createLink(env: Env, input: CreateLinkInput): Promise<ShortLink> {
@@ -191,7 +214,10 @@ export async function createLink(env: Env, input: CreateLinkInput): Promise<Shor
     updated_at: now,
   };
 
-  await fsPutJSON(env, PKEY_LINK(slug), link);
+  const qp: Record<string, string> = {};
+  if (input.remark) qp.remark = input.remark;
+  if (input.sort_order !== undefined) qp.sort_order = String(input.sort_order);
+  await fsPutJSON(env, PKEY_LINK(slug), link, Object.keys(qp).length ? qp : undefined);
   const slugs = await getLinksIndex(env);
   slugs.unshift(slug);
   await saveLinksIndex(env, slugs);
@@ -217,9 +243,14 @@ export async function updateLink(env: Env, input: UpdateLinkInput): Promise<Shor
   if (input.content_type !== undefined) link.content_type = input.content_type;
   if (input.basic_auth_username !== undefined) link.basic_auth_username = input.basic_auth_username || undefined;
   if (input.basic_auth_password !== undefined) link.basic_auth_password = input.basic_auth_password || undefined;
+  if (input.remark !== undefined) link.remark = input.remark;
 
   link.updated_at = new Date().toISOString();
-  await fsPutJSON(env, PKEY_LINK(input.slug), link);
+  const qp: Record<string, string> = {};
+  if (input.remark !== undefined) qp.remark = input.remark || '';
+  const body = { ...link };
+  stripMeta(body);
+  await fsPutJSON(env, PKEY_LINK(input.slug), body, Object.keys(qp).length ? qp : undefined);
   return link;
 }
 
@@ -239,13 +270,18 @@ export async function deleteLink(env: Env, slug: string): Promise<boolean> {
 export async function togglePinLink(env: Env, slug: string): Promise<ShortLink | null> {
   const link = await getLink(env, slug);
   if (!link) return null;
-  if (link.sort_order) {
+  const isPinned = !!link.sort_order;
+  const qp: Record<string, string> = {};
+  if (isPinned) {
+    qp.sort_order = '';
     delete link.sort_order;
   } else {
+    qp.sort_order = String(Date.now());
     link.sort_order = Date.now();
   }
-  link.updated_at = new Date().toISOString();
-  await fsPutJSON(env, PKEY_LINK(slug), link);
+  const body = { ...link };
+  stripMeta(body);
+  await fsPutJSON(env, PKEY_LINK(slug), body, qp);
   return link;
 }
 
