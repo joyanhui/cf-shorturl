@@ -6,7 +6,7 @@ import { Textarea } from '@/frontend/components/ui/textarea';
 import { Badge } from '@/frontend/components/ui/badge';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/frontend/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/frontend/components/ui/dialog';
-import { Search, Plus, Settings, Key, LogOut, Edit3, Trash2, Dice6, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Search, Plus, Settings, Key, LogOut, Edit3, Trash2, Dice6, ExternalLink, Eye, EyeOff, Pin, PinOff } from 'lucide-react';
 
 interface ShortLink {
   slug: string;
@@ -18,6 +18,7 @@ interface ShortLink {
   content_type?: string;
   basic_auth_username?: string;
   basic_auth_password?: string;
+  sort_order?: number;
   created_at: string;
   updated_at: string;
 }
@@ -96,6 +97,12 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
   }, [page, search, modeFilter]);
 
   useEffect(() => { loadLinks(); }, [loadLinks]);
+
+  const handleTogglePin = useCallback(async (slug: string) => {
+    const res = await fetch(adminPath + '/api/links/' + encodeURIComponent(slug) + '/toggle-pin', { method: 'POST' });
+    if (!res.ok) return;
+    loadLinks();
+  }, [adminPath, loadLinks]);
 
   const openCreate = useCallback(() => {
     setEditing(false);
@@ -263,6 +270,9 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">{new Date(link.created_at).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US')}</TableCell>
                   <TableCell>
+                    <Button variant={link.sort_order ? 'default' : 'outline'} size="sm" onClick={() => handleTogglePin(link.slug)} title={link.sort_order ? L('links.unpin') : L('links.pin')}>
+                      {link.sort_order ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                    </Button>{' '}
                     <Button variant="outline" size="sm" onClick={() => openEdit(link.slug)}><Edit3 className="h-3 w-3 mr-1" />{L('links.edit')}</Button>{' '}
                     <Button variant="destructive" size="sm" onClick={() => setShowDelete(link.slug)}><Trash2 className="h-3 w-3 mr-1" />{L('links.delete')}</Button>
                   </TableCell>

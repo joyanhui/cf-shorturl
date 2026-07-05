@@ -127,7 +127,12 @@ export async function listLinks(env: Env, options?: ListLinksOptions): Promise<L
     const link = await getLink(env, slug);
     if (link) allLinks.push(link);
   }
-  allLinks.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  allLinks.sort((a, b) => {
+    const aPin = a.sort_order ?? 0;
+    const bPin = b.sort_order ?? 0;
+    if (aPin !== bPin) return bPin - aPin;
+    return b.created_at.localeCompare(a.created_at);
+  });
 
   let filtered = allLinks;
   if (options?.search) {
@@ -229,6 +234,19 @@ export async function deleteLink(env: Env, slug: string): Promise<boolean> {
     await saveLinksIndex(env, slugs);
   }
   return true;
+}
+
+export async function togglePinLink(env: Env, slug: string): Promise<ShortLink | null> {
+  const link = await getLink(env, slug);
+  if (!link) return null;
+  if (link.sort_order) {
+    delete link.sort_order;
+  } else {
+    link.sort_order = Date.now();
+  }
+  link.updated_at = new Date().toISOString();
+  await fsPutJSON(env, PKEY_LINK(slug), link);
+  return link;
 }
 
 // --- Site settings ---

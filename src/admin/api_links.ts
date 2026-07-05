@@ -1,5 +1,5 @@
 import type { Env } from '../types';
-import { listLinks, getLink, createLink, updateLink, deleteLink } from '../lib/kv-fs';
+import { listLinks, getLink, createLink, updateLink, deleteLink, togglePinLink } from '../lib/kv-fs';
 import { ListLinksQuery, CreateLinkBody, UpdateLinkBody } from '../schemas';
 
 function cacheKey(slug: string): Request {
@@ -73,4 +73,13 @@ export async function handleDeleteLink(request: Request, env: Env, ctx: Executio
   }
   ctx.waitUntil(caches.default.delete(cacheKey(slug)));
   return Response.json({ success: true });
+}
+
+export async function handleTogglePinLink(slug: string, request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  const link = await togglePinLink(env, slug);
+  if (!link) {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+  ctx.waitUntil(caches.default.delete(cacheKey(slug)));
+  return Response.json(link);
 }

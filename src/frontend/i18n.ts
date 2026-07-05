@@ -79,6 +79,8 @@ const messages = {
   'dashboard.pwdBtn': { zh: '修改密码', en: 'Change Password' },
   'dashboard.logoutBtn': { zh: '退出', en: 'Logout' },
   'dashboard.newBtn': { zh: '新建', en: 'New' },
+  'links.pin': { zh: '置顶', en: 'Pin' },
+  'links.unpin': { zh: '取消置顶', en: 'Unpin' },
   'links.loading': { zh: '加载中...', en: 'Loading...' },
   'links.mode.302': { zh: '302 跳转', en: '302 Redirect' },
   'links.mode.301': { zh: '301 跳转', en: '301 Redirect' },

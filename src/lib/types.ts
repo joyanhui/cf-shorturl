@@ -12,6 +12,7 @@ export interface ShortLink {
   content_type?: string;
   basic_auth_username?: string;
   basic_auth_password?: string;
+  sort_order?: number;
   created_at: string;
   updated_at: string;
 }

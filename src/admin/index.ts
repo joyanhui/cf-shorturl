@@ -4,7 +4,7 @@ import type { ExecutionContext } from '@cloudflare/workers-types';
 import { checkAuth } from './auth';
 import { requireSessionResponse, resolveAdminPath } from '../lib/auth';
 import { handleLogin, handleLogout } from './api_login';
-import { handleListLinks, handleCreateLink, handleUpdateLink, handleDeleteLink } from './api_links';
+import { handleListLinks, handleCreateLink, handleUpdateLink, handleDeleteLink, handleTogglePinLink } from './api_links';
 import { handleGetSettings, handleUpdateSettings } from './api_settings';
 import { adminHTML } from '../frontend/admin.gen';
 
@@ -36,6 +36,7 @@ adminApp.get('/api/links', requireAuth, async (c) => handleListLinks(c.req.raw, 
 adminApp.post('/api/links', requireAuth, async (c) => handleCreateLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
 adminApp.put('/api/links', requireAuth, async (c) => handleUpdateLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
 adminApp.delete('/api/links', requireAuth, async (c) => handleDeleteLink(c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
+adminApp.post('/api/links/:slug/toggle-pin', requireAuth, async (c) => handleTogglePinLink(c.req.param('slug'), c.req.raw, c.env, c.executionCtx as unknown as ExecutionContext));
 
 adminApp.all('/*', (c) => {
   const adminPath = resolveAdminPath(c.env);
