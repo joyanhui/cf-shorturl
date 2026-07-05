@@ -6,7 +6,7 @@ import { Textarea } from '@/frontend/components/ui/textarea';
 import { Badge } from '@/frontend/components/ui/badge';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/frontend/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/frontend/components/ui/dialog';
-import { Search, Plus, Settings, LogOut, Edit3, Trash2, Dice6, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Search, Plus, Settings, Key, LogOut, Edit3, Trash2, Dice6, ExternalLink, Eye, EyeOff } from 'lucide-react';
 
 interface ShortLink {
   slug: string;
@@ -207,6 +207,7 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
           <span className="text-sm text-muted-foreground hidden sm:inline">{L('nav.dashboard')}</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowPwd(true)}><Key className="h-4 w-4 mr-1" />{L('dashboard.pwdBtn')}</Button>
           <Button variant="outline" size="sm" onClick={openSettings}><Settings className="h-4 w-4 mr-1" />{L('dashboard.settingsBtn')}</Button>
           <Button variant="outline" size="sm" onClick={() => setShowLogout(true)}><LogOut className="h-4 w-4 mr-1" />{L('dashboard.logoutBtn')}</Button>
           <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" />{L('dashboard.newBtn')}</Button>
@@ -409,6 +410,29 @@ export function Dashboard({ adminPath, locale, onLogout, onToggleLang }: { admin
               <Button type="submit">{L('settings.saveBtn')}</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPwd} onOpenChange={(o: boolean) => { if (!o) setShowPwd(false); }}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>{L('pwd.title')}</DialogTitle>
+            <DialogDescription>
+              <div className="mt-4 space-y-4 text-sm">
+                <p>{L('pwd.envIntro')}</p>
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>{L('pwd.step1')}</li>
+                  <li>{L('pwd.step2')}</li>
+                  <li>{L('pwd.step3')}</li>
+                  <li>{L('pwd.step4')}</li>
+                </ol>
+                <p className="text-xs text-muted-foreground border-t border-border pt-3">{L('pwd.note')}</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPwd(false)}>{L('modal.cancel')}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

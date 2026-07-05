@@ -106,6 +106,9 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
             </div>
           </form>
         </div>
+        <div className="mt-1 text-center">
+          <span className="text-[10px] text-muted-foreground/60">{t(locale, 'login.envHint')}</span>
+        </div>
         {turnstileSiteKey && (
           <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
         )}
