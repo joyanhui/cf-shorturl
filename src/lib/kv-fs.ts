@@ -136,9 +136,18 @@ async function saveLinksIndex(env: Env, slugs: string[]): Promise<void> {
 export async function listLinks(env: Env, options?: ListLinksOptions): Promise<ListLinksResult> {
   const slugs = await getLinksIndex(env);
   const allLinks: ShortLink[] = [];
+  const staleSlugs: string[] = [];
   for (const slug of slugs) {
     const link = await getLink(env, slug);
-    if (link) allLinks.push(link);
+    if (link) {
+      allLinks.push(link);
+    } else {
+      staleSlugs.push(slug);
+    }
+  }
+  if (staleSlugs.length > 0) {
+    const cleanSlugs = slugs.filter(s => !staleSlugs.includes(s));
+    await saveLinksIndex(env, cleanSlugs);
   }
   allLinks.sort((a, b) => {
     const aPin = a.sort_order ?? 0;
