@@ -61,9 +61,9 @@ export function LoginPage({ adminPath, locale, onLogin, turnstileSiteKey, onTogg
             {t(locale, 'login.defaultPathWarning.body')}
           </div>
         )}
-        <div className="rounded-xl border bg-card p-8 shadow-sm">
+        <div className="rounded-xl border bg-card p-6 sm:p-8 shadow-sm">
           <div className="text-center mb-6">
-            <h1 className="text-xl font-bold text-foreground">🔗 CF ShortURL</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-foreground">{locale === 'zh' ? '短链接管理' : 'CF ShortURL'}</h1>
             <p className="text-sm text-muted-foreground mt-1">{t(locale, 'login.title')}</p>
           </div>
           <form onSubmit={handleSubmit}>
