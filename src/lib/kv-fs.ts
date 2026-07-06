@@ -229,7 +229,10 @@ export async function createLink(env: Env, input: CreateLinkInput): Promise<Shor
     updated_at: now,
   };
 
-  await fsPutJSON(env, PKEY_LINK(slug), link);
+  const qp: Record<string, string> = {};
+  if (input.remark) qp.remark = input.remark;
+  if (input.sort_order !== undefined) qp.sort_order = String(input.sort_order);
+  await fsPutJSON(env, PKEY_LINK(slug), link, Object.keys(qp).length ? qp : undefined);
   const slugs = await getLinksIndex(env);
   slugs.unshift(slug);
   await saveLinksIndex(env, slugs);
@@ -258,7 +261,10 @@ export async function updateLink(env: Env, input: UpdateLinkInput): Promise<Shor
   if (input.remark !== undefined) link.remark = input.remark;
 
   link.updated_at = new Date().toISOString();
-  await fsPutJSON(env, PKEY_LINK(input.slug), link);
+  const qp: Record<string, string> = {};
+  if (link.remark) qp.remark = link.remark;
+  if (link.sort_order !== undefined) qp.sort_order = String(link.sort_order);
+  await fsPutJSON(env, PKEY_LINK(input.slug), link, Object.keys(qp).length ? qp : undefined);
   return link;
 }
 
@@ -283,7 +289,9 @@ export async function togglePinLink(env: Env, slug: string): Promise<ShortLink |
   } else {
     link.sort_order = Date.now();
   }
-  await fsPutJSON(env, PKEY_LINK(slug), link);
+  const qp: Record<string, string> = {};
+  if (link.sort_order !== undefined) qp.sort_order = String(link.sort_order);
+  await fsPutJSON(env, PKEY_LINK(slug), link, Object.keys(qp).length ? qp : undefined);
   return link;
 }
 
