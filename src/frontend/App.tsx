@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { type Locale } from './i18n';
 import { LoginPage } from './LoginPage';
 import { Dashboard } from './Dashboard';
+import { LinksPage } from './LinksPage';
+import { SettingsPage } from './SettingsPage';
 
 function getAdminPath(): string {
   return (window as unknown as Record<string,string>).ADMIN_PATH ?? '/admin';
@@ -20,7 +22,6 @@ export function App() {
     return navigator.language?.startsWith('zh') ? 'zh' : 'en';
   });
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
 
   useEffect(() => {
     localStorage.setItem('locale', locale);
@@ -40,27 +41,15 @@ export function App() {
   useEffect(() => {
     fetch(adminPath + '/api/check')
       .then(r => r.json() as Promise<{ authed: boolean }>)
-      .then(d => { setAuthed(d.authed); if (d.authed) fetchSettings(); })
+      .then(d => setAuthed(d.authed))
       .catch(() => setAuthed(false));
-    fetchSettings();
   }, []);
-
-  function fetchSettings() {
-    fetch(adminPath + '/api/settings')
-      .then(r => r.json() as Promise<{ turnstile_site_key?: string }>)
-      .then(s => setTurnstileSiteKey(s.turnstile_site_key || ''))
-      .catch(() => {});
-  }
-
-  const clearAdminCookie = useCallback(() => {
-    document.cookie = 'admin_token=; Path=' + adminPath + '; SameSite=Lax; Max-Age=0';
-  }, [adminPath]);
 
   const handleLogout = async () => {
     try {
       await fetch(adminPath + '/api/login', { method: 'DELETE' });
     } catch {}
-    clearAdminCookie();
+    document.cookie = 'admin_token=; Path=' + adminPath + '; SameSite=Lax; Max-Age=0';
     setAuthed(false);
   };
 
@@ -77,14 +66,17 @@ export function App() {
       <Routes>
         <Route path="/login" element={
           !authed
-            ? <LoginPage adminPath={adminPath} locale={locale} onLogin={() => setAuthed(true)} turnstileSiteKey={turnstileSiteKey} onToggleLang={toggleLang} defaultPath={adminPath === '/admin'} />
+            ? <LoginPage adminPath={adminPath} locale={locale} onLogin={() => setAuthed(true)} onToggleLang={toggleLang} defaultPath={adminPath === '/admin'} />
             : <Navigate to="/" replace />
         } />
-        <Route path="/*" element={
+        <Route path="/" element={
           authed
             ? <Dashboard adminPath={adminPath} locale={locale} onLogout={handleLogout} onToggleLang={toggleLang} />
             : <Navigate to="/login" replace />
-        } />
+        }>
+          <Route index element={<LinksPage adminPath={adminPath} locale={locale} />} />
+          <Route path="settings" element={<SettingsPage adminPath={adminPath} locale={locale} />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
