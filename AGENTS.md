@@ -1,5 +1,7 @@
 # AGENTS.md
 
+- flake 用法：进入 `cf-shorturl/` 后执行 `nix develop`（或 direnv），获得 bun/wrangler 开发环境。
+
 ## 技术栈
 
 Bun + React + React Router + Hono + OpenAPI + Tailwind CSS + shadcn/ui + Zod。
