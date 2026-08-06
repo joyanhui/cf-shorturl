@@ -1,5 +1,5 @@
 {
-  description = "cf-shorturl —— Cloudflare Worker (Hono+React) 开发环境";
+  description = "Cloudflare Worker (Hono+React) 开发环境";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
