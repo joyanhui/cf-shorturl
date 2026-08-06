@@ -15,13 +15,18 @@
           allowUnfree = true;
         };
       };
+
+      jsPackages = with pkgs; [
+        bun
+      ];
+
+      cloudflarePackages = with pkgs; [
+        wrangler
+      ];
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        packages = with pkgs; [
-          bun
-          wrangler
-        ];
+        packages = jsPackages ++ cloudflarePackages;
 
         shellHook = ''
           echo "== cf-shorturl devShell =="
