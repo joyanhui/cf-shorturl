@@ -21,7 +21,7 @@ Bun + React + React Router + Hono + OpenAPI + Tailwind CSS + shadcn/ui + Zod。
 - **i18n 类型安全:** `messages` 使用 `as const` 定义，导出 `MessageKey = keyof typeof messages`。`t()` 参数 `key: MessageKey` 而非 `string`，编译时校验 key 合法性。组件内定义 `const L = (key: MessageKey, ...) => t(locale, key, ...)` 包装调用。
 - **测试:** `bun test` 运行单元测试（`tests/core.test.ts`）。集成测试（`tests/api.test.ts`）需先启动 `wrangler dev`，通过 `TEST_BASE_URL`/`TEST_ADMIN_PATH`/`TEST_ADMIN_PASSWORD` 环境变量配置。
 - **构建:** `bun scripts/build.ts` 编译 Tailwind + esbuild 打包 SPA，产物内联到 `admin.gen.ts`。
-- **esbuild alias `@` → `src`**，shadcn 组件用 `npx shadcn@latest add` 添加到 `src/frontend/components/ui/`。
+- **esbuild alias `@` → `src`**，shadcn 组件用 `bunx shadcn@latest add` 添加到 `src/frontend/components/ui/`。
 
 ## 部署（重要）
 
@@ -38,9 +38,9 @@ Cloudflare Dashboard 配置：
 
 ### 查看线上状态
 
-使用 `npx wrangler` 查看构建日志和线上状态：
-- `npx wrangler deployments list` — 查看部署历史
-- `npx wrangler tail cf-shorturl` — Worker 实时日志
+使用 `bunx wrangler` 查看构建日志和线上状态：
+- `bunx wrangler deployments list` — 查看部署历史
+- `bunx wrangler tail cf-shorturl` — Worker 实时日志
 
 根据线上日志修复代码后，推送即可触发重新部署。
 

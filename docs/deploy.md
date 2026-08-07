@@ -45,8 +45,8 @@ Workers Builds 是 Cloudflare 提供的 CI/CD 服务，不是 GitHub Actions。
 
 | 配置项 | 填写值 | 说明 |
 |--------|--------|------|
-| **Build command** | `npm run build` | 运行 `scripts/build.ts`，编译 Tailwind CSS + 打包 SPA |
-| **Deploy command** | `npx wrangler deploy` | 部署 Worker（基于 `wrangler.jsonc`） |
+| **Build command** | `bun run build` | 运行 `scripts/build.ts`，编译 Tailwind CSS + 打包 SPA |
+| **Deploy command** | `bunx wrangler deploy` | 部署 Worker（基于 `wrangler.jsonc`） |
 | **Framework preset** | **None** | 不使用预设，使用自定义命令 |
 
 构建失败排查：在 Cloudflare Dashboard 的 Builds 标签页查看构建日志。

@@ -13,7 +13,7 @@
 ## 方法二：wrangler CLI
 
 ```sh
-echo "NEW_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD --name cf-shorturl
+echo "NEW_PASSWORD" | bunx wrangler secret put ADMIN_PASSWORD --name cf-shorturl
 ```
 
 然后推送代码触发重新部署：
