@@ -24,9 +24,11 @@
           echo "== cf-shorturl devShell =="
           echo "  bun = $(bun --version 2>/dev/null) wrangler = $(bunx wrangler --version 2>/dev/null)"
           echo "  本地开发: bun dev；构建: bun run build；测试: bun test"
-          if [ -t 0 ] && command -v fish >/dev/null 2>&1; then
+          if command -v fish >/dev/null 2>&1; then
             export __FISH_DEVSHELL=1
-            exec fish
+            if [ -t 0 ]; then
+              exec fish
+            fi
           fi
         '';
       };
