@@ -21,14 +21,13 @@
         packages = basePackages.all ++ jsPackages;
 
         shellHook = ''
+          export PATH="/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH"
           echo "== cf-shorturl devShell =="
           echo "  bun = $(bun --version 2>/dev/null) wrangler = $(bunx wrangler --version 2>/dev/null)"
           echo "  本地开发: bun dev；构建: bun run build；测试: bun test"
-          if command -v fish >/dev/null 2>&1; then
+          if [ -t 0 ] && command -v fish >/dev/null 2>&1; then
             export __FISH_DEVSHELL=1
-            if [ -t 0 ]; then
-              exec fish
-            fi
+            exec fish
           fi
         '';
       };
