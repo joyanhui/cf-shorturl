@@ -8,26 +8,18 @@
   outputs =
     { nixpkgs, ... }:
     let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config = {
-          allowUnfree = true;
-        };
-      };
-
-      pick =
-        set: names:
-        map (n: pkgs.lib.getAttrFromPath (pkgs.lib.splitString "." n) set) (pkgs.lib.splitString "|" names);
-      pkgList = pick pkgs;
-
-      basePackages = pkgList "fish";
-      jsPackages = pkgList "bun";
-      cloudflarePackages = pkgList "wrangler";
+      env = import ./flake_pkgs_let.nix { inherit nixpkgs; };
+      inherit (env)
+        system
+        pkgs
+        basePackages
+        jsPackages
+        cloudflarePackages
+        ;
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        packages = basePackages ++ jsPackages ++ cloudflarePackages;
+        packages = basePackages.all ++ jsPackages ++ cloudflarePackages;
 
         shellHook = ''
           echo "== cf-shorturl devShell =="
